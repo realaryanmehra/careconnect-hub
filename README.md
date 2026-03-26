@@ -1,73 +1,76 @@
-# Welcome to your Lovable project
+# CareConnect Hub - Hospital Management System
 
-## Project info
+## Quick Start Guide
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+This is a simple hospital management app with registration and login.
 
-## How can I edit this code?
+### Prerequisites
+1. Node.js installed
+2. MongoDB installed and running (or use MongoDB Atlas)
 
-There are several ways of editing your application.
+### Running the Application
 
-**Use Lovable**
+#### Step 1: Start MongoDB
+Make sure MongoDB is running:
+- Local: `mongod` (or start MongoDB service)
+- Or use MongoDB Atlas (cloud)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+#### Step 2: Start the Backend
+```bash
+cd careconnect-hub/backend
+npm install (already done)
 npm run dev
 ```
+The backend will start on http://localhost:5001
 
-**Edit a file directly in GitHub**
+#### Step 3: Start the Frontend
+Open a new terminal:
+```bash
+cd careconnect-hub
+npm install (already done)
+npm run dev
+```
+The frontend will start on http://localhost:8080
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### How It Works
 
-**Use GitHub Codespaces**
+#### Registration (Frontend → Backend)
+1. User fills form on RegisterPage
+2. AuthContext.register() calls apiRequest("/api/auth/register")
+3. Frontend sends POST to /api/auth/register
+4. Backend creates user in MongoDB
+5. Backend returns token + user data
+6. Frontend saves to localStorage
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+#### Login (Frontend → Backend)
+1. User fills form on LoginPage
+2. AuthContext.login() calls apiRequest("/api/auth/login")
+3. Frontend sends POST to /api/auth/login
+4. Backend verifies password with MongoDB
+5. Backend returns token + user data
+6. Frontend saves to localStorage
 
-## What technologies are used for this project?
+### API Endpoints
 
-This project is built with:
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | /api/auth/register | Create new account |
+| POST | /api/auth/login | Login to account |
+| GET | /api/auth/me | Get current user |
+| GET | /health | Health check |
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Troubleshooting
 
-## How can I deploy this project?
+**MongoDB Connection Error:**
+- Make sure MongoDB is running: `mongod`
+- Or check MONGO_URI in backend/.env
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+**API Requests Failing:**
+- Make sure backend is running on port 5001
+- Check browser console for errors
 
-## Can I connect a custom domain to my Lovable project?
+**Login/Register Not Working:**
+- Open browser DevTools → Network tab
+- Check if requests are being made
+- Check response from server
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)

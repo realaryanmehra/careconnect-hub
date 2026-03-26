@@ -3,6 +3,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 const navItems = [
     { label: "Home", path: "/" },
     { label: "Dashboard", path: "/dashboard" },
@@ -13,6 +14,7 @@ const navItems = [
 const Header = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
     const location = useLocation();
+    const { isAuthenticated, user, logout } = useAuth();
     return (<header className="sticky top-0 z-50 glass">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
@@ -34,12 +36,18 @@ const Header = () => {
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/tokens">Check Token</Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link to="/appointments">Book Now</Link>
-          </Button>
+          {!isAuthenticated && (<>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/login">Login</Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link to="/register">Register</Link>
+              </Button>
+            </>)}
+          {isAuthenticated && (<>
+              <span className="text-sm text-muted-foreground">Hi, {user?.name?.split(" ")[0] || "User"}</span>
+              <Button variant="outline" size="sm" onClick={logout}>Logout</Button>
+            </>)}
         </div>
 
         {/* Mobile toggle */}
@@ -58,9 +66,17 @@ const Header = () => {
                   {item.label}
                 </Link>))}
               <div className="flex gap-2 mt-3 px-4">
-                <Button size="sm" className="flex-1" asChild>
-                  <Link to="/appointments" onClick={() => setMobileOpen(false)}>Book Now</Link>
-                </Button>
+                {!isAuthenticated && (<>
+                    <Button size="sm" variant="outline" className="flex-1" asChild>
+                      <Link to="/login" onClick={() => setMobileOpen(false)}>Login</Link>
+                    </Button>
+                    <Button size="sm" className="flex-1" asChild>
+                      <Link to="/register" onClick={() => setMobileOpen(false)}>Register</Link>
+                    </Button>
+                  </>)}
+                {isAuthenticated && <Button size="sm" variant="outline" className="flex-1" onClick={() => { logout(); setMobileOpen(false); }}>
+                    Logout
+                  </Button>}
               </div>
             </nav>
           </motion.div>)}
