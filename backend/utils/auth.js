@@ -21,4 +21,3 @@ export const generateToken = (user) => {
 };
 
 export default { safeUser, generateToken };
-

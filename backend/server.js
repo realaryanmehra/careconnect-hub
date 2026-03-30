@@ -2,7 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { MongoClient, ObjectId } from 'mongodb';
-import { randomUUID } from 'crypto';
 
 // Modular imports
 import authRouter from './routes/auth.js';
@@ -32,11 +31,19 @@ const connectToMongoDB = async () => {
     console.log('✅ Connected to MongoDB!');
     
     db = client.db(MONGO_DB_NAME);
-    usersCollection = db.collection('users');
+    console.log('📁 Database selected:', MONGO_DB_NAME);
+    
+globalThis.usersCollection = db.collection('users');
+    console.log('👥 Users collection accessed successfully');
+    
+if (!globalThis.usersCollection) {
+      throw new Error('Failed to initialize usersCollection');
+    }
     
     await initUserCollection();
   } catch (error) {
-    console.error('❌ MongoDB error:', error.message);
+    console.error('❌ MongoDB connection failed:', error.message);
+    console.error('Check: MONGO_URI, MongoDB running, network');
     process.exit(1);
   }
 };
@@ -59,4 +66,3 @@ const startServer = async () => {
 };
 
 startServer();
-
