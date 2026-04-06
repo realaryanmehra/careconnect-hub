@@ -6,6 +6,9 @@ import { MongoClient, ObjectId } from 'mongodb';
 // Modular imports
 import authRouter from './routes/auth.js';
 import { initUserCollection } from './models/User.js';
+import { initTokenCollection } from './models/Token.js';
+import { initAppointmentCollection } from './models/Appointment.js';
+import { initDashboardCollection } from './models/Dashboard.js';
 import { healthCheck } from './controllers/authController.js';
 
 // Load env
@@ -21,7 +24,6 @@ const MONGO_DB_NAME = process.env.MONGO_DB_NAME || 'careconnect';
 
 // Globals for DB
 let db;
-let usersCollection;
 
 /** Connect DB & init */
 const connectToMongoDB = async () => {
@@ -33,14 +35,23 @@ const connectToMongoDB = async () => {
     db = client.db(MONGO_DB_NAME);
     console.log('📁 Database selected:', MONGO_DB_NAME);
     
-globalThis.usersCollection = db.collection('users');
-    console.log('👥 Users collection accessed successfully');
+    globalThis.usersCollection = db.collection('users');
+    globalThis.tokensCollection = db.collection('tokens');
+    globalThis.appointmentsCollection = db.collection('appointments');
+    globalThis.dashboardCollection = db.collection('dashboard');
     
-if (!globalThis.usersCollection) {
-      throw new Error('Failed to initialize usersCollection');
-    }
+    console.log('👥 Users collection ready');
+    console.log('🎫 Tokens collection ready');
+    console.log('📅 Appointments collection ready');
+    console.log('📊 Dashboard collection ready');
     
-    await initUserCollection();
+    // Initialize all collections
+    await Promise.all([
+      initUserCollection(),
+      initTokenCollection(),
+      initAppointmentCollection(),
+      initDashboardCollection()
+    ]);
   } catch (error) {
     console.error('❌ MongoDB connection failed:', error.message);
     console.error('Check: MONGO_URI, MongoDB running, network');
@@ -52,6 +63,15 @@ if (!globalThis.usersCollection) {
 app.get('/health', healthCheck);
 app.use('/api/auth', authRouter);
 
+// Import routers
+import tokenRouter from './routes/tokens.js';
+import dashboardRouter from './routes/dashboard.js';
+import appointmentRouter from './routes/appointments.js';
+
+app.use('/api/tokens', tokenRouter);
+app.use('/api/dashboard', dashboardRouter);
+app.use('/api/appointments', appointmentRouter);
+
 /** Start server */
 const startServer = async () => {
   await connectToMongoDB();
@@ -62,6 +82,9 @@ const startServer = async () => {
     console.log('  POST /api/auth/register');
     console.log('  POST /api/auth/login');
     console.log('  GET /api/auth/me (protected)');
+    console.log('  POST /api/tokens (protected)');
+    console.log('  GET /api/dashboard (protected)');
+    console.log('  POST /api/appointments (protected)');
   });
 };
 

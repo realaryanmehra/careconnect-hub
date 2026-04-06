@@ -1,18 +1,18 @@
-# React Code Simplification Plan
+# Fix Appointment Booking - Data Storage Issue
+✅ **UNDERSTANDING**: Frontend form sends data → Backend receives empty req.body despite auth working
 
-## Task: Make React files beginner-friendly
+## Breakdown Plan (Approved - Proceed)
 
-### Steps:
-1. [x] Simplify App.jsx - Add comments explaining providers
-2. [x] Simplify api.js - Add comments explaining fetch wrapper
-3. [x] Simplify AuthContext.jsx - Remove useMemo, add detailed comments
-4. [x] Simplify ProtectedRoute.jsx - Add detailed comments
-5. [x] Simplify LoginPage.jsx - Add comments
-6. [x] Simplify RegisterPage.jsx - Add comments
-7. [x] Simplify AppointmentsPage.jsx - Add comments, simplify logic
-8. [x] Simplify DashboardPage.jsx - Add detailed comments
+### Step 1: Create TODO.md [DONE]
+### Step 2: Add Auth Guard + Debug Logging to Frontend [✅ DONE]
+- `AppointmentsPage.jsx`: Import/use AuthContext, add isAuthenticated check, enhance handleBook error logging
+### Step 3: Enhance API Client Logging [✅ DONE]
+- `api.js`: Log fetch details before send (URL, body size, headers, response status)
+### Step 4: Backend Debug Headers [✅ DONE]
+- `appointmentController.js`: Log Content-Type, body size, raw JSON
+### Step 5: Test Full Flow [PENDING]
+- Login → Fill form → Verify DB insert → Update TODO
+### Step 6: Complete [PENDING]
 
-### Progress:
-- Started: Completed all 8 files
-- Completed: 8/8
+**Progress**: 1/6 ✅
 

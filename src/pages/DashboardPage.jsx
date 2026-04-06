@@ -7,7 +7,10 @@
 // ============================================
 // Import React and hooks
 // ============================================
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { getDashboard } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // ============================================
 // Import icons from lucide-react
@@ -146,30 +149,74 @@ const recordTypeConfig = {
 // DashboardPage Component
 // ============================================
 const DashboardPage = () => {
-  // ============================================
-  // STATE: Filter options for tabs
-  // ============================================
+  const { isAuthenticated } = useAuth();
   
-  // Filter for appointments (all, upcoming, completed, cancelled)
+  // Data state - starts loading
+  const [dashboardData, setDashboardData] = useState({ loading: true });
+  
+  // Filter state
   const [aptFilter, setAptFilter] = useState("all");
-  
-  // Search text for medical records
   const [recordSearch, setRecordSearch] = useState("");
 
-  // ============================================
-  // COMPUTED: Filtered data based on state
-  // ============================================
-  
-  // Filter appointments based on selected filter
+  // Fetch data on mount
+  useEffect(() => {
+    if (!isAuthenticated) return setDashboardData({ loading: false });
+    
+    const loadDashboard = async () => {
+      try {
+        const data = await getDashboard();
+        setDashboardData(data);
+      } catch (error) {
+        console.error('Dashboard load error:', error);
+        setDashboardData({ error: error.message, loading: false });
+      }
+    };
+    
+    loadDashboard();
+  }, [isAuthenticated]);
+
+  if (dashboardData.loading) {
+    return (
+      <Layout>
+        <div className="container py-10 space-y-8">
+          <div className="space-y-2">
+            <Skeleton className="h-9 w-64" />
+            <Skeleton className="h-4 w-72" />
+          </div>
+          <div className="grid lg:grid-cols-3 gap-6">
+            <Skeleton className="h-64 w-full" />
+            <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4">
+              {Array(4).fill().map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (dashboardData.error) {
+    return (
+      <Layout>
+        <div className="container py-10 text-center">
+          <p className="text-destructive">Error: {dashboardData.error}</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Destructure data with fallback
+  const { patientInfo = {}, activeTokens = [], appointments = [], vitals = [], medicalRecords = [], prescriptions = [] } = dashboardData;
+
+  // Filtered data
   const filteredApts = aptFilter === "all" 
     ? appointments 
     : appointments.filter(a => a.status === aptFilter);
 
-  // Filter medical records based on search text
   const filteredRecords = recordSearch
     ? medicalRecords.filter(r => 
-        r.title.toLowerCase().includes(recordSearch.toLowerCase()) || 
-        r.type.toLowerCase().includes(recordSearch.toLowerCase())
+        (r.title || '').toLowerCase().includes(recordSearch.toLowerCase()) || 
+        (r.type || '').toLowerCase().includes(recordSearch.toLowerCase())
       )
     : medicalRecords;
 
@@ -190,7 +237,7 @@ const DashboardPage = () => {
                 Patient <span className="text-primary">Dashboard</span>
               </h1>
               <p className="text-muted-foreground mt-1">
-                Welcome back, {patientInfo.name}
+                Welcome back, {patientInfo.name || 'Patient'}
               </p>
             </div>
             

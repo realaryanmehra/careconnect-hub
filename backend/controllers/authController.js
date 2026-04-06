@@ -1,3 +1,4 @@
+
 import bcrypt from 'bcryptjs';
 import { findByEmail, createUser, findById } from '../models/User.js';
 import { safeUser, generateToken } from '../utils/auth.js';

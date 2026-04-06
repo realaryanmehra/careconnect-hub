@@ -1,52 +1,81 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { getTokens, generateToken } from "@/lib/api";
 import { motion } from "framer-motion";
 import { Clock, Hash, User, CheckCircle, AlertCircle, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import Layout from "@/components/Layout";
 import { useToast } from "@/hooks/use-toast";
 const departments = ["Cardiology", "Neurology", "Orthopedics", "Pediatrics", "Ophthalmology", "General Medicine"];
-const initialTokens = [
-    { id: "1", number: 1, patientName: "Rahul Sharma", department: "Cardiology", status: "completed", estimatedTime: "Done", createdAt: "09:00 AM" },
-    { id: "2", number: 2, patientName: "Priya Patel", department: "Neurology", status: "in-progress", estimatedTime: "~5 min", createdAt: "09:15 AM" },
-    { id: "3", number: 3, patientName: "Amit Kumar", department: "Cardiology", status: "waiting", estimatedTime: "~20 min", createdAt: "09:30 AM" },
-    { id: "4", number: 4, patientName: "Sneha Reddy", department: "Pediatrics", status: "waiting", estimatedTime: "~35 min", createdAt: "09:45 AM" },
-];
 const statusConfig = {
     waiting: { label: "Waiting", icon: Clock, className: "bg-warning/10 text-warning border-warning/20" },
     "in-progress": { label: "In Progress", icon: Loader2, className: "bg-info/10 text-info border-info/20" },
     completed: { label: "Completed", icon: CheckCircle, className: "bg-success/10 text-success border-success/20" },
 };
 const TokensPage = () => {
-    const [tokens, setTokens] = useState(initialTokens);
+    const { isAuthenticated } = useAuth();
+    const [tokens, setTokens] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [name, setName] = useState("");
     const [dept, setDept] = useState("");
     const [searchToken, setSearchToken] = useState("");
     const { toast } = useToast();
-    const handleGenerate = () => {
+
+    // Fetch tokens
+    useEffect(() => {
+        if (!isAuthenticated) return;
+        const fetchTokens = async () => {
+            try {
+                const data = await getTokens();
+                setTokens(data.tokens || []);
+            } catch (error) {
+                toast({ title: "Error loading tokens", description: error.message, variant: "destructive" });
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchTokens();
+    }, [isAuthenticated]);
+
+    const handleGenerate = async () => {
         if (!name || !dept) {
             toast({ title: "Please fill all fields", variant: "destructive" });
             return;
         }
-        const newToken = {
-            id: String(tokens.length + 1),
-            number: tokens.length + 1,
-            patientName: name,
-            department: dept,
-            status: "waiting",
-            estimatedTime: `~${(tokens.filter(t => t.status === "waiting").length + 1) * 15} min`,
-            createdAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        };
-        setTokens([...tokens, newToken]);
-        setName("");
-        setDept("");
-        toast({ title: `Token #${newToken.number} generated!`, description: `Department: ${dept}` });
+        try {
+            const data = await generateToken({ patientName: name, department: dept });
+            setTokens(prev => [data.token, ...prev]);
+            toast({ title: `Token #${data.token.number} generated!`, description: `Department: ${dept}` });
+            setName("");
+            setDept("");
+        } catch (error) {
+            toast({ title: "Failed to generate token", description: error.message, variant: "destructive" });
+        }
     };
+    
     const filteredTokens = searchToken
         ? tokens.filter(t => t.number.toString().includes(searchToken) || t.patientName.toLowerCase().includes(searchToken.toLowerCase()))
         : tokens;
+
+    if (loading) {
+        return (
+            <Layout>
+                <div className="container py-10 space-y-8">
+                    <Skeleton className="h-12 w-80" />
+                    <div className="grid lg:grid-cols-3 gap-8">
+                        <Skeleton className="h-96 w-full" />
+                        <div className="lg:col-span-2 space-y-3">
+                            {Array(5).fill().map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}
+                        </div>
+                    </div>
+                </div>
+            </Layout>
+        );
+    }
     return (<Layout>
       <div className="container py-10">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
