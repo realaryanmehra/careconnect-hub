@@ -25,36 +25,26 @@ const MONGO_DB_NAME = process.env.MONGO_DB_NAME || 'careconnect';
 // Globals for DB
 let db;
 
-/** Connect DB & init */
+// Connect DB
 const connectToMongoDB = async () => {
   try {
     const client = new MongoClient(MONGO_URI);
     await client.connect();
-    console.log('✅ Connected to MongoDB!');
+    console.log('Connected to MongoDB');
     
     db = client.db(MONGO_DB_NAME);
-    console.log('📁 Database selected:', MONGO_DB_NAME);
-    
     globalThis.usersCollection = db.collection('users');
     globalThis.tokensCollection = db.collection('tokens');
     globalThis.appointmentsCollection = db.collection('appointments');
     globalThis.dashboardCollection = db.collection('dashboard');
     
-    console.log('👥 Users collection ready');
-    console.log('🎫 Tokens collection ready');
-    console.log('📅 Appointments collection ready');
-    console.log('📊 Dashboard collection ready');
-    
-    // Initialize all collections
     await Promise.all([
-      initUserCollection(),
-      initTokenCollection(),
-      initAppointmentCollection(),
-      initDashboardCollection()
+      initUserCollection(), initTokenCollection(),
+      initAppointmentCollection(), initDashboardCollection()
     ]);
+    console.log('Collections ready');
   } catch (error) {
-    console.error('❌ MongoDB connection failed:', error.message);
-    console.error('Check: MONGO_URI, MongoDB running, network');
+    console.error('MongoDB connection failed:', error.message);
     process.exit(1);
   }
 };
