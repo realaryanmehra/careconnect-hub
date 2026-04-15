@@ -35,21 +35,14 @@ export const apiRequest = async (path, options = {}) => {
   };
 
   // Make the HTTP request using fetch
-  const response = await fetch(apiUrl(path), {
+const response = await fetch(`http://localhost:5001${path}`, {
     ...options,
     headers: mergedHeaders,
   });
 
-  // Try to parse the response as JSON
-  // If response is empty, use empty object instead
   const data = await response.json().catch(() => ({}));
 
-  // ============================================
-  // Error Handling
-  // ============================================
-  // If response was not successful (status code 4xx or 5xx)
   if (!response.ok) {
-    // Throw an error with the server's message or a generic one
     throw new Error(data.message || "Request failed");
   }
 

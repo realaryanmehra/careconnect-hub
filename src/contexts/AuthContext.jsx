@@ -56,7 +56,7 @@ const logout = () => {
   localStorage.removeItem(STORAGE_USER_KEY);
 };
 
-const value = { token, user, loading, isAuthenticated: Boolean(token), login, register, logout };
+const value = { token, user, loading, isAuthenticated: Boolean(token), isAdmin: user?.role === 'admin', login, register, logout };
 return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 

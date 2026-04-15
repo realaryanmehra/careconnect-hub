@@ -14,6 +14,8 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -35,8 +37,15 @@ const App = () => {
               <Route path="/appointments" element={
                 <ProtectedRoute><AppointmentsPage /></ProtectedRoute>
               } />
-              <Route path="/dashboard" element={
+<Route path="/dashboard" element={
                 <ProtectedRoute><DashboardPage /></ProtectedRoute>
+              } />
+              <Route path="/admin" element={
+                <ProtectedRoute>
+                  <AdminRoute>
+                    <AdminDashboard />
+                  </AdminRoute>
+                </ProtectedRoute>
               } />
               <Route path="*" element={<NotFound />} />
             </Routes>

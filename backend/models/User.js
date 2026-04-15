@@ -35,8 +35,25 @@ export const initUserCollection = async () => {
     throw new Error('usersCollection is not initialized. Check server.js connection.');
   }
   await globalThis.usersCollection.createIndex({ email: 1 }, { unique: true });
-  console.log('✅ Users collection ready with email index!');
+  
+  // Create admin if not exists
+  const adminEmail = 'Drsamar@gmail.com';
+  if (!await globalThis.usersCollection.findOne({ email: adminEmail })) {
+    const bcrypt = (await import('bcryptjs')).default;
+    const passwordHash = await bcrypt.hash('samarpreet', 10);
+    await globalThis.usersCollection.insertOne({
+      _id: new ObjectId(),
+      name: 'Dr.samarpreet singh',
+      email: adminEmail,
+      passwordHash,
+      role: 'admin',
+      createdAt: new Date()
+    });
+    console.log('Admin created:', adminEmail);
+  }
+  console.log('Users collection ready');
 };
 
 export default { findByEmail, findById, createUser, initUserCollection };
+
 

@@ -57,10 +57,12 @@ app.use('/api/auth', authRouter);
 import tokenRouter from './routes/tokens.js';
 import dashboardRouter from './routes/dashboard.js';
 import appointmentRouter from './routes/appointments.js';
+import adminRouter from './routes/admin.js';
 
 app.use('/api/tokens', tokenRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/appointments', appointmentRouter);
+app.use('/api/admin', adminRouter);
 
 /** Start server */
 const startServer = async () => {

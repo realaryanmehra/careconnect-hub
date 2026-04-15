@@ -8,13 +8,14 @@ export const safeUser = (user) => ({
   id: user._id.toString(),
   name: user.name,
   email: user.email,
+  role: user.role,
   createdAt: user.createdAt,
 });
 
 // Generate JWT token
 export const generateToken = (user) => {
   return jwt.sign(
-    { id: user._id.toString(), email: user.email },
+    { id: user._id.toString(), email: user.email, role: user.role || 'patient' },
     JWT_SECRET,
     { expiresIn: '7d' }
   );

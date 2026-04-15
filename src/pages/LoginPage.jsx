@@ -56,9 +56,9 @@ const LoginPage = () => {
   const { toast } = useToast();
 
   // ============================================
-  // Get login function from AuthContext
+  // Get login function and current user from AuthContext
   // ============================================
-  const { login } = useAuth();
+  const { login, user } = useAuth();
 
   // ============================================
   // Get navigate function for redirecting
@@ -88,13 +88,18 @@ const LoginPage = () => {
     try {
       // Call login function from AuthContext
       // This makes API call and saves auth token
-      await login({ email, password });
+      // Use the returned user object instead of context state to avoid timing issues
+      const loggedInUser = await login({ email, password });
       
       // Show success notification
       toast({ title: "Logged in successfully" });
       
-      // Redirect to the original page or dashboard
-      navigate(from, { replace: true });
+      // Admin-specific redirect - check returned user, not context state
+      if (loggedInUser?.role === 'admin') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate(from, { replace: true });
+      }
       
     } catch (error) {
       // Show error notification
