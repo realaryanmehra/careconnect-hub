@@ -47,7 +47,7 @@ const Index = () => {
                   Book Appointment <ArrowRight className="ml-2 h-4 w-4"/>
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10" asChild>
+              <Button size="lg" variant="default" className="bg-green-500 hover:bg-green-600 text-white" asChild>
                 <Link to="/tokens">Check Token Status</Link>
               </Button>
             </div>

@@ -37,7 +37,7 @@ export const initUserCollection = async () => {
   await globalThis.usersCollection.createIndex({ email: 1 }, { unique: true });
   
   // Create admin if not exists
-  const adminEmail = 'Drsamar@gmail.com';
+  const adminEmail = 'drsamar@gmail.com'; // normalized to lowercase
   if (!await globalThis.usersCollection.findOne({ email: adminEmail })) {
     const bcrypt = (await import('bcryptjs')).default;
     const passwordHash = await bcrypt.hash('samarpreet', 10);

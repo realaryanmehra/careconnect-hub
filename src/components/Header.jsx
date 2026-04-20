@@ -4,17 +4,25 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-const navItems = [
-    { label: "Home", path: "/" },
-    { label: "Dashboard", path: "/dashboard" },
-    { label: "Tokens", path: "/tokens" },
-    { label: "Book Appointment", path: "/appointments" },
-    { label: "Departments", path: "/departments" },
-];
+
 const Header = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
     const location = useLocation();
-    const { isAuthenticated, user, logout } = useAuth();
+    const { isAuthenticated, user, logout, isAdmin } = useAuth();
+    
+    // Different nav items for admin vs regular users
+    const navItems = isAdmin
+        ? [
+            { label: "Home", path: "/" },
+            { label: "Admin Dashboard", path: "/admin" },
+          ]
+        : [
+            { label: "Home", path: "/" },
+            { label: "Dashboard", path: "/dashboard" },
+            { label: "Tokens", path: "/tokens" },
+            { label: "Book Appointment", path: "/appointments" },
+            { label: "Departments", path: "/departments" },
+          ];
     return (<header className="sticky top-0 z-50 glass">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
