@@ -1,83 +1,58 @@
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { MongoClient, ObjectId } from 'mongodb';
-
-// Modular imports
+import connectDB from './config/database.js';
 import authRouter from './routes/auth.js';
-import { initUserCollection } from './models/User.js';
-import { initTokenCollection } from './models/Token.js';
-import { initAppointmentCollection } from './models/Appointment.js';
-import { initDashboardCollection } from './models/Dashboard.js';
-import { healthCheck } from './controllers/authController.js';
-
-// Load env
-dotenv.config();
-
-const app = express();
-app.use(express.json());
-app.use(cors());
-
-const PORT = process.env.PORT || 5001;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
-const MONGO_DB_NAME = process.env.MONGO_DB_NAME || 'careconnect';
-
-// Globals for DB
-let db;
-
-// Connect DB
-const connectToMongoDB = async () => {
-  try {
-    const client = new MongoClient(MONGO_URI);
-    await client.connect();
-    console.log('Connected to MongoDB');
-    
-    db = client.db(MONGO_DB_NAME);
-    globalThis.usersCollection = db.collection('users');
-    globalThis.tokensCollection = db.collection('tokens');
-    globalThis.appointmentsCollection = db.collection('appointments');
-    globalThis.dashboardCollection = db.collection('dashboard');
-    
-    await Promise.all([
-      initUserCollection(), initTokenCollection(),
-      initAppointmentCollection(), initDashboardCollection()
-    ]);
-    console.log('Collections ready');
-  } catch (error) {
-    console.error('MongoDB connection failed:', error.message);
-    process.exit(1);
-  }
-};
-
-// Routes
-app.get('/health', healthCheck);
-app.use('/api/auth', authRouter);
-
-// Import routers
 import tokenRouter from './routes/tokens.js';
 import dashboardRouter from './routes/dashboard.js';
 import appointmentRouter from './routes/appointments.js';
 import adminRouter from './routes/admin.js';
+import { healthCheck } from './controllers/authController.js';
 
+dotenv.config();
+
+const app = express();
+
+// Middleware
+app.use(express.json());
+app.use(cookieParser());
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
+
+const PORT = process.env.PORT || 5001;
+
+// Health check
+app.get('/health', healthCheck);
+
+// Routes
+app.use('/api/auth', authRouter);
 app.use('/api/tokens', tokenRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/appointments', appointmentRouter);
 app.use('/api/admin', adminRouter);
 
-/** Start server */
+// Start server
 const startServer = async () => {
-  await connectToMongoDB();
-  app.listen(PORT, () => {
-    console.log(`🚀 Server on http://localhost:${PORT}`);
-    console.log('Endpoints:');
-    console.log('  GET /health');
-    console.log('  POST /api/auth/register');
-    console.log('  POST /api/auth/login');
-    console.log('  GET /api/auth/me (protected)');
-    console.log('  POST /api/tokens (protected)');
-    console.log('  GET /api/dashboard (protected)');
-    console.log('  POST /api/appointments (protected)');
-  });
+  try {
+    await connectDB();
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log('Endpoints:');
+      console.log('  POST /api/auth/register');
+      console.log('  POST /api/auth/login');
+      console.log('  GET /api/auth/me');
+      console.log('  POST /api/tokens/generate');
+      console.log('  GET /api/dashboard');
+      console.log('  POST /api/appointments/book');
+      console.log('Admin login: drsamar@gmail.com / samarpreet');
+    });
+  } catch (error) {
+    console.error('Server failed to start:', error);
+  }
 };
 
 startServer();
+

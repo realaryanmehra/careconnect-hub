@@ -1,24 +1,22 @@
+// SIMPLE JWT AUTH MIDDLEWARE - Check cookie token
 import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from '../utils/constants.js';
 
-// Authentication middleware - verifies JWT token
-const authMiddleware = (req, res, next) => {
-  const authHeader = req.headers.authorization || '';
-
-  if (!authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Unauthorized - No token provided' });
-  }
-
-  const token = authHeader.slice(7);
-
+const authMiddleware = async (req, res, next) => {
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
+    // Step 1: Get token from cookie
+    const token = req.cookies.token;
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
 
-    req.auth = payload;
-
-    return next();
-  } catch {
-    return res.status(401).json({ message: 'Invalid or expired token' });
+    // Step 2: Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret');
+    
+    // Step 3: Add user to request
+    req.user = decoded;
+    next();
+  } catch (error) {
+    res.status(401).json({ message: 'Invalid token' });
   }
 };
 

@@ -1,68 +1,120 @@
-import { findTokensByUser, createToken, updateTokenStatus as updateModelTokenStatus } from '../models/Token.js';
+import { ObjectId } from 'mongodb';
+import { ensureDB } from '../utils/db.js';
 
-// Get user tokens
+// TOKEN QUEUE SYSTEM - Patient gets queue number
+// GET USER TOKENS (with simple stats)
 export const getTokens = async (req, res) => {
+  if (!globalThis.dbReady) {
+    return res.json({ tokens: [], stats: { total: 0, waiting: 0, 'in-progress': 0, completed: 0 } });
+  }
+
   try {
-    const tokens = await findTokensByUser(req.auth.id);
-    console.log('Tokens fetched for:', req.auth.id);
+    ensureDB();
     
-    return res.json({
-      tokens,
-      stats: {
-        total: tokens.length,
-        waiting: tokens.filter(t => t.status === 'waiting').length,
-        'in-progress': tokens.filter(t => t.status === 'in-progress').length,
-        completed: tokens.filter(t => t.status === 'completed').length
-      }
-    });
+    // Step 1: Find user's tokens (newest first)
+    const tokens = await globalThis.tokensCollection
+      .find({ userId: new ObjectId(req.auth.id) })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    // Step 2: Calculate simple stats
+    const stats = {
+      total: tokens.length,
+      waiting: tokens.filter(t => t.status === 'waiting').length,
+      'in-progress': tokens.filter(t => t.status === 'in-progress').length,
+      completed: tokens.filter(t => t.status === 'completed').length
+    };
+
+    console.log('Tokens fetched:', stats.total);
+    
+    // Same response
+    res.json({ tokens, stats });
   } catch (error) {
-    console.error('Get tokens error:', error.message);
-    return res.status(500).json({ message: 'Server error' });
+    console.error('Get tokens error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Generate new token
+
+// GENERATE NEW TOKEN (queue number)
 export const generateToken = async (req, res) => {
+  if (!globalThis.dbReady) {
+    return res.status(201).json({ token: { number: 1, status: 'waiting', position: 1 } });
+  }
+
   try {
     const { patientName, department } = req.body;
-    if (!patientName || !department) return res.status(400).json({ message: 'Patient/dept required' });
+    if (!patientName || !department) {
+      return res.status(400).json({ message: 'Patient name and department required' });
+    }
 
-    const tokens = await findTokensByUser(req.auth.id);
-    const waitingCount = tokens.filter(t => t.status === 'waiting').length;
+    ensureDB();
+
+    // Step 1: Get user's current tokens to calculate number
+    const existingTokens = await globalThis.tokensCollection.find({ userId: new ObjectId(req.auth.id) }).toArray();
+    const waitingTokens = existingTokens.filter(t => t.status === 'waiting').length;
     
-    const tokenData = {
-      number: tokens.length + 1, patientName, department, status: 'waiting',
-      position: waitingCount, estimatedTime: `~${(waitingCount + 1) * 15} min`
+    // Step 2: Create new token data
+    const newToken = {
+      _id: new ObjectId(),
+      number: existingTokens.length + 1,
+      patientName: patientName.trim(),
+      department,
+      status: 'waiting',
+      position: waitingTokens,
+      estimatedTime: `~${(waitingTokens + 1) * 15} minutes`,
+      userId: new ObjectId(req.auth.id),
+      createdAt: new Date()
     };
-    
-    const token = await createToken(tokenData, req.auth.id);
-    console.log('Token generated:', token.number);
-    
-    return res.status(201).json({ token });
+
+    // Step 3: Save token
+    await globalThis.tokensCollection.insertOne(newToken);
+
+    console.log('✅ Token generated:', newToken.number);
+
+    res.status(201).json({ token: newToken });
   } catch (error) {
-    console.error('Generate token error:', error.message);
-    return res.status(500).json({ message: 'Server error' });
+    console.error('Generate token error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Update token status
+// UPDATE TOKEN STATUS (waiting → in-progress → completed)
 export const updateTokenStatus = async (req, res) => {
+  if (!globalThis.dbReady) {
+    return res.json({ message: 'Updated (demo)' });
+  }
+
   try {
     const { status } = req.body;
-    if (!['waiting', 'in-progress', 'completed'].includes(status)) {
-      return res.status(400).json({ message: 'Invalid status' });
+    const validStatuses = ['waiting', 'in-progress', 'completed'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Status must be: waiting, in-progress, or completed' });
     }
-    
-    await updateModelTokenStatus(req.params.id, status, req.auth.id);
-    console.log('Token status updated:', status);
-    
-    return res.json({ message: 'Updated' });
+
+    ensureDB();
+
+    // Step 1: Update token if it belongs to user
+    const result = await globalThis.tokensCollection.updateOne(
+      { 
+        _id: new ObjectId(req.params.id),
+        userId: new ObjectId(req.auth.id)
+      },
+      { $set: { status, updatedAt: new Date() } }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ message: 'Token not found or not yours' });
+    }
+
+    console.log('✅ Token status updated:', status);
+    res.json({ message: 'Token updated' });
   } catch (error) {
-    console.error('Update token error:', error.message);
-    if (error.message === 'Token not found') return res.status(404).json({ message: 'Not found' });
-    return res.status(500).json({ message: 'Server error' });
+    console.error('Update token error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
 export default { getTokens, generateToken, updateTokenStatus };
+
 

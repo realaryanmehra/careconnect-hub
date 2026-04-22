@@ -1,7 +1,10 @@
-import { safeUser } from '../utils/auth.js';
-
+// ADMIN ONLY MIDDLEWARE - Check if user is admin
 const adminMiddleware = (req, res, next) => {
-  if (req.auth.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
+  // Step 1: Check user role
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Admin access required' });
+  }
+  
   next();
 };
 

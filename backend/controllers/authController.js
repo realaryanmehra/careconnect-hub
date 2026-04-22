@@ -1,66 +1,111 @@
 
 import bcrypt from 'bcryptjs';
-import { findByEmail, createUser, findById } from '../models/User.js';
 import { safeUser, generateToken } from '../utils/auth.js';
-import { ObjectId } from 'mongodb';
 
-// Register new user
+// Use global flags from server.js (no import needed)
+
+
+// REGISTER - Mongoose makes it 10 lines!
 export const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    if (!name || !email || !password || password.length < 6) return res.status(400).json({ message: 'Invalid input' });
     
-    const normalizedEmail = email.trim().toLowerCase();
-    if (await findByEmail(normalizedEmail)) return res.status(409).json({ message: 'Email exists' });
+    if (!name || !email || !password || password.length < 6) {
+      return res.status(400).json({ message: 'Name, email, password (6+ chars)' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
     
-    const newUser = await createUser(name, normalizedEmail, await bcrypt.hash(password, 10));
-    console.log('New user registered:', newUser.email);
-    
-    return res.status(201).json({ user: safeUser(newUser), token: generateToken(newUser) });
+    const user = await globalThis.User.create({
+      name,
+      email: email.toLowerCase().trim(),
+      passwordHash,
+      role: 'patient'
+    });
+
+    res.status(201).json({
+      user: safeUser(user),
+      token: generateToken(user)
+    });
   } catch (error) {
-    console.error('Register error:', error.message);
-    return res.status(500).json({ message: 'Server error' });
+    if (error.code === 11000) {
+      return res.status(409).json({ message: 'Email exists' });
+    }
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Login user
+
+
+// LOGIN - Simple Mongoose
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ message: 'Email/password required' });
     
-    const user = await findByEmail(email.trim().toLowerCase());
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password required' });
+    }
+
+    const user = await globalThis.User.findOne({ email: email.toLowerCase().trim() });
+    
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
     
-    // For testing: make admin if email matches
-    if (user.email === 'drsamar@gmail.com') {
-      user.role = 'admin';
+    // Admin test user
+    if (user.email === 'drsamar@gmail.com') user.role = 'admin';
+
+    res.json({
+      user: safeUser(user),
+      token: generateToken(user)
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
+
+// GET CURRENT USER PROFILE (protected route)
+export const getMe = async (req, res) => {
+  // FALLBACK demo user
+  if (!dbReady) {
+    const demoUser = FALLBACK_DATA.users[0];
+    return res.json({ user: { id: demoUser._id, name: demoUser.name, email: demoUser.email, role: 'patient' } });
+  }
+
+  try {
+    // Step 1: Check DB ready
+    ensureDB();
+    
+    // Step 2: Find user by ID from token
+    const user = await globalThis.usersCollection.findOne({ 
+      _id: new ObjectId(req.auth.id) 
+    });
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
     
-    console.log('User logged in:', user.email);
-    return res.json({ user: safeUser(user), token: generateToken(user) });
-  } catch (error) {
-    console.error('Login error:', error.message);
-    return res.status(500).json({ message: 'Server error' });
-  }
-};
-
-// Get current user profile
-export const getMe = async (req, res) => {
-  try {
-    const user = await findById(req.auth.id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    // Step 3: Return safe user info (no password)
     return res.json({ user: safeUser(user) });
   } catch (error) {
-    console.error('Profile error:', error.message);
+    console.error('Get me error:', error.message);
     return res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Health check endpoint
-export const healthCheck = (req, res) => res.json({ ok: true, service: 'careconnect', timestamp: new Date().toISOString() });
+// Health check - Simple server status
+export const healthCheck = (req, res) => {
+  res.json({ 
+    ok: true, 
+    service: 'careconnect-backend', 
+    timestamp: new Date().toISOString(),
+    dbReady 
+  });
+};
 
 export default { register, login, getMe, healthCheck };
+
 
