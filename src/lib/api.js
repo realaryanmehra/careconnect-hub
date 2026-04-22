@@ -35,7 +35,7 @@ export const apiRequest = async (path, options = {}) => {
   };
 
   // Make the HTTP request using fetch
-const response = await fetch(`http://localhost:5001${path}`, {
+const response = await fetch(`http://localhost:5000${path}`, {
     ...options,
     headers: mergedHeaders,
   });
@@ -71,13 +71,20 @@ export const authRequest = async (path, options = {}) => {
     bodyPreview: requestBody ? requestBody.substring(0, 200) + '...' : null
   });
   
-  const response = await apiRequest(path, {
+const response = await apiRequest(path, {
     ...options,
     headers: {
       'Authorization': `Bearer ${token}`,
       ...options.headers
     }
   });
+  
+  // Auto-logout on 401 (token expired)
+  if (!response.ok && response.status === 401) {
+    localStorage.removeItem('careconnect_auth_token');
+    localStorage.removeItem('careconnect_auth_user');
+    window.location.href = '/login';
+  }
   
   console.log('📥 API Response:', {
     status: response.status,
@@ -107,6 +114,11 @@ export const bookAppointment = (data) => authRequest('/api/appointments', {
 /* 
    NEW USAGE EXAMPLES:
    
+   // Admin CRUD
+   const users = await authRequest('/api/admin/users');
+   const appt = await updateAppointment('id123', { status: 'completed' });
+   await deleteToken('tokenId');
+   
    // Get dashboard data (tokens, appointments, profile)
    const dashboard = await getDashboard();
    
@@ -119,3 +131,42 @@ export const bookAppointment = (data) => authRequest('/api/appointments', {
    // Authenticated GET (manual)
    const tokens = await authRequest('/api/tokens');
 */
+
+// Admin API Helpers
+export const createAppointment = (data) => authRequest('/api/admin/appointments', {
+  method: 'POST',
+  body: JSON.stringify(data)
+});
+
+export const updateAppointment = (id, data) => authRequest(`/api/admin/appointments/${id}`, {
+  method: 'PUT',
+  body: JSON.stringify(data)
+});
+
+export const deleteAppointment = (id) => authRequest(`/api/admin/appointments/${id}`, {
+  method: 'DELETE'
+});
+
+export const createTokenAdmin = (data) => authRequest('/api/admin/tokens', {
+  method: 'POST',
+  body: JSON.stringify(data)
+});
+
+export const updateTokenAdmin = (id, data) => authRequest(`/api/admin/tokens/${id}`, {
+  method: 'PUT',
+  body: JSON.stringify(data)
+});
+
+export const deleteTokenAdmin = (id) => authRequest(`/api/admin/tokens/${id}`, {
+  method: 'DELETE'
+});
+
+export const updateUserAdmin = (id, data) => authRequest(`/api/admin/users/${id}`, {
+  method: 'PUT',
+  body: JSON.stringify(data)
+});
+
+export const deleteUserAdmin = (id) => authRequest(`/api/admin/users/${id}`, {
+  method: 'DELETE'
+});
+

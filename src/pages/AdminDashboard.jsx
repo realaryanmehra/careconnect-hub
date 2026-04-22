@@ -10,7 +10,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { authRequest } from '@/lib/api';
+import { 
+  authRequest, 
+  updateAppointment, deleteAppointment, createAppointment,
+  updateTokenAdmin as updateToken, deleteTokenAdmin as deleteToken, createTokenAdmin as createToken,
+  updateUserAdmin as updateUser, deleteUserAdmin as deleteUser 
+} from '@/lib/api';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Edit3, Trash2, Plus, Check, Loader2 } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+
 import { Users, Calendar, Activity, Settings, Search, Filter, Ticket, X } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -25,6 +36,12 @@ const AdminDashboard = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterTokenStatus, setFilterTokenStatus] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
+  const [editingAppointment, setEditingAppointment] = useState(null);
+  const [editingToken, setEditingToken] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, type: '', id: '', name: '' });
+  const { toast } = useToast();
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -49,8 +66,121 @@ const AdminDashboard = () => {
       setTokens(tokensData.tokens || []);
     } catch (error) {
       console.error('Error fetching data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch data",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUpdateAppointment = async (id, updates) => {
+    setSaving(true);
+    try {
+      await updateAppointment(id, updates);
+      toast({ title: "Success", description: "Appointment updated" });
+      fetchData();
+      setEditingAppointment(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.message || "Update failed",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteAppointment = async (id, name) => {
+    setSaving(true);
+    try {
+      await deleteAppointment(id);
+      toast({ title: "Success", description: `Deleted ${name}` });
+      fetchData();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.message || "Delete failed",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+      setDeleteDialog({ open: false, type: '', id: '', name: '' });
+    }
+  };
+
+  const handleUpdateToken = async (id, updates) => {
+    setSaving(true);
+    try {
+      await updateToken(id, updates);
+      toast({ title: "Success", description: "Token updated" });
+      fetchData();
+      setEditingToken(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.message || "Update failed",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteToken = async (id, name) => {
+    setSaving(true);
+    try {
+      await deleteToken(id);
+      toast({ title: "Success", description: `Deleted ${name}` });
+      fetchData();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.message || "Delete failed",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+      setDeleteDialog({ open: false, type: '', id: '', name: '' });
+    }
+  };
+
+  const handleUpdateUser = async (id, updates) => {
+    setSaving(true);
+    try {
+      await updateUser(id, updates);
+      toast({ title: "Success", description: "User updated" });
+      fetchData();
+      setEditingUser(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.message || "Update failed",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteUser = async (id, name) => {
+    setSaving(true);
+    try {
+      await deleteUser(id);
+      toast({ title: "Success", description: `Deleted ${name}` });
+      fetchData();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.message || "Delete failed",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+      setDeleteDialog({ open: false, type: '', id: '', name: '' });
     }
   };
 
@@ -278,6 +408,71 @@ const AdminDashboard = () => {
                                 {a.status?.charAt(0).toUpperCase() + a.status?.slice(1)}
                               </Badge>
                             </TableCell>
+                            <TableCell className="flex gap-1">
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button size="sm" variant="outline" onClick={() => setEditingAppointment(a)}>
+                                    <Edit3 className="w-4 h-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Edit Appointment</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Update status and notes for {a.patientName}
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <div className="space-y-4">
+                                    <div>
+                                      <Label>Status</Label>
+                                      <Select value={editingAppointment?.status || a.status} onValueChange={(v) => setEditingAppointment({...editingAppointment, status: v})}>
+                                        <SelectTrigger>
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="upcoming">Upcoming</SelectItem>
+                                          <SelectItem value="in-progress">In Progress</SelectItem>
+                                          <SelectItem value="completed">Completed</SelectItem>
+                                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    <div>
+                                      <Label>Notes</Label>
+                                      <Textarea 
+                                        value={editingAppointment?.notes || a.notes || ''} 
+                                        onChange={(e) => setEditingAppointment({...editingAppointment, notes: e.target.value})}
+                                        placeholder="Additional notes..."
+                                      />
+                                    </div>
+                                  </div>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel onClick={() => setEditingAppointment(null)}>Cancel</AlertDialogCancel>
+                                    <Button onClick={() => handleUpdateAppointment(a.id, editingAppointment || a)} disabled={saving}>
+                                      {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
+                                      Save
+                                    </Button>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button size="sm" variant="destructive" onClick={() => setDeleteDialog({open: true, type: 'appointment', id: a.id, name: a.patientName})}>
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Appointment?</AlertDialogTitle>
+                                    <AlertDialogDescription>Delete {a.patientName}'s appointment? This cannot be undone.</AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDeleteAppointment(a.id, a.patientName)}>Delete</AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </TableCell>
                           </TableRow>
                         ))
                       ) : (
@@ -348,7 +543,7 @@ const AdminDashboard = () => {
                     </TableHeader>
                     <TableBody>
                       {filteredTokens.length > 0 ? (
-                        filteredTokens.map(t => (
+                      filteredTokens.map(t => (
                           <TableRow key={t._id}>
                             <TableCell className="font-bold text-lg">{t.number}</TableCell>
                             <TableCell className="font-medium">{t.patientName}</TableCell>
@@ -371,6 +566,69 @@ const AdminDashboard = () => {
                             </TableCell>
                             <TableCell>{t.estimatedTime || 'N/A'}</TableCell>
                             <TableCell>{t.createdAt ? new Date(t.createdAt).toLocaleDateString() : 'N/A'}</TableCell>
+                            <TableCell className="flex gap-1">
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button size="sm" variant="outline" onClick={() => setEditingToken(t)}>
+                                    <Edit3 className="w-4 h-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Edit Token #{t.number}</AlertDialogTitle>
+                                    <AlertDialogDescription>Update status for {t.patientName}</AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <div className="space-y-4">
+                                    <div>
+                                      <Label>Status</Label>
+                                      <Select value={editingToken?.status || t.status} onValueChange={(v) => setEditingToken({...editingToken, status: v})}>
+                                        <SelectTrigger>
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="waiting">Waiting</SelectItem>
+                                          <SelectItem value="in-progress">In Progress</SelectItem>
+                                          <SelectItem value="completed">Completed</SelectItem>
+                                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    <div>
+                                      <Label>Estimated Time</Label>
+                                      <Input 
+                                        type="time" 
+                                        value={editingToken?.estimatedTime || t.estimatedTime || ''} 
+                                        onChange={(e) => setEditingToken({...editingToken, estimatedTime: e.target.value})}
+                                      />
+                                    </div>
+                                  </div>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel onClick={() => setEditingToken(null)}>Cancel</AlertDialogCancel>
+                                    <Button onClick={() => handleUpdateToken(t.id, editingToken || t)} disabled={saving}>
+                                      {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
+                                      Save
+                                    </Button>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button size="sm" variant="destructive" onClick={() => setDeleteDialog({open: true, type: 'token', id: t.id, name: `Token #${t.number}`})}>
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Token?</AlertDialogTitle>
+                                    <AlertDialogDescription>Delete Token #{t.number} for {t.patientName}? This cannot be undone.</AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDeleteToken(t.id, `Token #${t.number}`)}>Delete</AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </TableCell>
                           </TableRow>
                         ))
                       ) : (

@@ -14,6 +14,30 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: 'Name, email, password (6+ chars)' });
     }
 
+    if (!globalThis.dbReady) {
+      const normalizedEmail = email.toLowerCase().trim();
+      const existingUser = globalThis.FALLBACK_DATA.users.find((user) => user.email === normalizedEmail);
+      if (existingUser) {
+        return res.status(409).json({ message: 'Email exists' });
+      }
+
+      const passwordHash = await bcrypt.hash(password, 10);
+      const user = {
+        _id: `demo-user-${Date.now()}`,
+        name: name.trim(),
+        email: normalizedEmail,
+        passwordHash,
+        role: 'patient',
+        createdAt: new Date()
+      };
+      globalThis.FALLBACK_DATA.users.push(user);
+
+      return res.status(201).json({
+        user: safeUser(user),
+        token: generateToken(user)
+      });
+    }
+
     const passwordHash = await bcrypt.hash(password, 10);
     
     const user = await globalThis.User.create({
@@ -46,6 +70,20 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: 'Email and password required' });
     }
 
+    if (!globalThis.dbReady) {
+      const normalizedEmail = email.toLowerCase().trim();
+      const user = globalThis.FALLBACK_DATA.users.find((item) => item.email === normalizedEmail);
+
+      if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+
+      return res.json({
+        user: safeUser(user),
+        token: generateToken(user)
+      });
+    }
+
     const user = await globalThis.User.findOne({ email: email.toLowerCase().trim() });
     
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
@@ -53,7 +91,7 @@ export const login = async (req, res) => {
     }
     
     // Admin test user
-    if (user.email === 'drsamar@gmail.com') user.role = 'admin';
+    if (user.email === 'samar@gmail.com') user.role = 'admin';
 
     res.json({
       user: safeUser(user),
@@ -69,26 +107,19 @@ export const login = async (req, res) => {
 
 // GET CURRENT USER PROFILE (protected route)
 export const getMe = async (req, res) => {
-  // FALLBACK demo user
-  if (!dbReady) {
-    const demoUser = FALLBACK_DATA.users[0];
-    return res.json({ user: { id: demoUser._id, name: demoUser.name, email: demoUser.email, role: 'patient' } });
-  }
-
   try {
-    // Step 1: Check DB ready
-    ensureDB();
-    
-    // Step 2: Find user by ID from token
-    const user = await globalThis.usersCollection.findOne({ 
-      _id: new ObjectId(req.auth.id) 
-    });
-    
+    if (!globalThis.dbReady) {
+      const user = globalThis.FALLBACK_DATA.users.find((item) => item._id.toString() === req.auth.id);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      return res.json({ user: safeUser(user) });
+    }
+
+    const user = await globalThis.User.findById(req.auth.id).select('-passwordHash');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    
-    // Step 3: Return safe user info (no password)
     return res.json({ user: safeUser(user) });
   } catch (error) {
     console.error('Get me error:', error.message);
@@ -102,7 +133,7 @@ export const healthCheck = (req, res) => {
     ok: true, 
     service: 'careconnect-backend', 
     timestamp: new Date().toISOString(),
-    dbReady 
+    dbReady: !!globalThis.dbReady
   });
 };
 

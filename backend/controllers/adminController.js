@@ -1,5 +1,6 @@
 // ADMIN CONTROLLERS - Simple admin dashboard data
 import { ensureDB } from '../utils/db.js';
+import { ObjectId } from 'mongodb';
 
 // GET ALL USERS (admin view)
 export const getAllUsers = async (req, res) => {
@@ -195,6 +196,147 @@ export const getStatistics = async (req, res) => {
   }
 };
 
-export default { getAllUsers, getAllAppointments, getAllTokens, getStatistics };
+export const createAppointment = async (req, res) => {
+  if (!globalThis.dbReady) return res.status(503).json({ message: 'DB not ready' });
+  try {
+    ensureDB();
+    const data = req.body;
+    const result = await globalThis.appointmentsCollection.insertOne({
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      status: data.status || 'upcoming'
+    });
+    const newApt = { id: result.insertedId.toString(), ...data, _id: result.insertedId };
+    res.status(201).json({ appointment: newApt });
+  } catch (error) {
+    console.error('Create appointment error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const updateAppointment = async (req, res) => {
+  if (!globalThis.dbReady) return res.status(503).json({ message: 'DB not ready' });
+  try {
+    ensureDB();
+    const { id } = req.params;
+    const updates = req.body;
+    const result = await globalThis.appointmentsCollection.updateOne(
+      { _id: new globalThis.ObjectId(id) },
+      { $set: { ...updates, updatedAt: new Date() } }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ message: 'Appointment not found' });
+    res.json({ message: 'Updated', modified: result.modifiedCount > 0 });
+  } catch (error) {
+    console.error('Update appointment error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const deleteAppointment = async (req, res) => {
+  if (!globalThis.dbReady) return res.status(503).json({ message: 'DB not ready' });
+  try {
+    ensureDB();
+    const { id } = req.params;
+    const result = await globalThis.appointmentsCollection.deleteOne({ _id: new globalThis.ObjectId(id) });
+    if (result.deletedCount === 0) return res.status(404).json({ message: 'Not found' });
+    res.json({ message: 'Deleted' });
+  } catch (error) {
+    console.error('Delete appointment error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const createToken = async (req, res) => {
+  if (!globalThis.dbReady) return res.status(503).json({ message: 'DB not ready' });
+  try {
+    ensureDB();
+    const data = req.body;
+    const result = await globalThis.tokensCollection.insertOne({
+      ...data,
+      status: data.status || 'waiting',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+    const newToken = { id: result.insertedId.toString(), ...data, _id: result.insertedId };
+    res.status(201).json({ token: newToken });
+  } catch (error) {
+    console.error('Create token error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const updateToken = async (req, res) => {
+  if (!globalThis.dbReady) return res.status(503).json({ message: 'DB not ready' });
+  try {
+    ensureDB();
+    const { id } = req.params;
+    const updates = req.body;
+    const result = await globalThis.tokensCollection.updateOne(
+      { _id: new globalThis.ObjectId(id) },
+      { $set: { ...updates, updatedAt: new Date() } }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ message: 'Token not found' });
+    res.json({ message: 'Updated', modified: result.modifiedCount > 0 });
+  } catch (error) {
+    console.error('Update token error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const deleteToken = async (req, res) => {
+  if (!globalThis.dbReady) return res.status(503).json({ message: 'DB not ready' });
+  try {
+    ensureDB();
+    const { id } = req.params;
+    const result = await globalThis.tokensCollection.deleteOne({ _id: new globalThis.ObjectId(id) });
+    if (result.deletedCount === 0) return res.status(404).json({ message: 'Not found' });
+    res.json({ message: 'Deleted' });
+  } catch (error) {
+    console.error('Delete token error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const updateUser = async (req, res) => {
+  if (!globalThis.dbReady) return res.status(503).json({ message: 'DB not ready' });
+  try {
+    ensureDB();
+    const { id } = req.params;
+    const updates = req.body;
+    // Safe fields only
+    const safeUpdates = { role: updates.role };
+    const result = await globalThis.usersCollection.updateOne(
+      { _id: new globalThis.ObjectId(id) },
+      { $set: { ...safeUpdates, updatedAt: new Date() } }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ message: 'User not found' });
+    res.json({ message: 'Updated', modified: result.modifiedCount > 0 });
+  } catch (error) {
+    console.error('Update user error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  if (!globalThis.dbReady) return res.status(503).json({ message: 'DB not ready' });
+  try {
+    ensureDB();
+    const { id } = req.params;
+    const result = await globalThis.usersCollection.deleteOne({ _id: new globalThis.ObjectId(id) });
+    if (result.deletedCount === 0) return res.status(404).json({ message: 'Not found' });
+    res.json({ message: 'Deleted' });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export default { 
+  getAllUsers, getAllAppointments, getAllTokens, getStatistics,
+  createAppointment, updateAppointment, deleteAppointment,
+  createToken, updateToken, deleteToken,
+  updateUser, deleteUser
+};
 
 

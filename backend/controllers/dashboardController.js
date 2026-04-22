@@ -1,9 +1,12 @@
-import { ObjectId } from 'mongodb';
 import { ensureDB } from '../utils/db.js';
 import { safeUser } from '../utils/auth.js';
 
 // PATIENT DASHBOARD - Personal info, tokens, appointments
 export const getDashboard = async (req, res) => {
+  if (!req.auth || !req.auth.id) {
+    console.error('Dashboard auth missing:', req.auth);
+    return res.status(401).json({ message: 'Authentication required' });
+  }
   if (!globalThis.dbReady) {
     // Demo dashboard
     return res.json({
@@ -20,45 +23,39 @@ export const getDashboard = async (req, res) => {
     ensureDB();
     const userId = req.auth.id;
 
-    // STEP 1: Parallel fetches (fast)
-    const [dashboardDoc, tokens, appointments, user] = await Promise.all([
-      globalThis.dashboardCollection.findOne({ userId: new ObjectId(userId) }),
-      globalThis.tokensCollection.find({ userId: new ObjectId(userId) }).toArray(),
-      globalThis.appointmentsCollection.find({ userId: new ObjectId(userId) }).sort({ date: 1 }).toArray(),
-      globalThis.usersCollection.findOne({ _id: new ObjectId(userId) })
+    // STEP 1: Mongoose queries only (no BSON issues)
+    const [user, tokens, appointments] = await Promise.all([
+      globalThis.User.findById(userId),
+      globalThis.Token.find({ userId }).sort({ createdAt: -1 }),
+      globalThis.Appointment.find({ userId }).sort({ date: 1 })
     ]);
 
-    // STEP 2: Default dashboard if empty
-    const dashboard = dashboardDoc || {
-      patientInfo: {},
-      vitals: [],
-      medicalRecords: [],
-      prescriptions: []
-    };
+    // STEP 2: Filter active tokens
+    const activeTokens = tokens.filter(t => ['waiting', 'in-progress'].includes(t.status || ''));
 
-    // STEP 3: Filter active tokens
-    const activeTokens = tokens.filter(t => ['waiting', 'in-progress'].includes(t.status));
-
-    // STEP 4: Simple appointments list
+    // STEP 3: Format appointments
     const simpleAppointments = appointments.map(apt => ({
       id: apt._id.toString(),
       department: apt.department,
       doctor: apt.doctor,
-      date: apt.date,
+      date: apt.date ? apt.date.toISOString().split('T')[0] : '',
       time: apt.time,
       status: apt.status
     }));
 
     console.log('✅ Dashboard loaded for user:', userId);
 
-    // SAME EXACT FORMAT
     res.json({
-      patientInfo: { ...dashboard.patientInfo, email: user?.email || '' },
+      patientInfo: { 
+        name: user?.name || 'Patient', 
+        email: user?.email || '',
+        role: user?.role || 'patient'
+      },
       activeTokens,
       appointments: simpleAppointments,
-      vitals: dashboard.vitals || [],
-      medicalRecords: dashboard.medicalRecords || [],
-      prescriptions: dashboard.prescriptions || []
+      vitals: [],
+      medicalRecords: [],
+      prescriptions: []
     });
   } catch (error) {
     console.error('Dashboard error:', error);

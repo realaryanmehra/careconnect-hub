@@ -1,8 +1,10 @@
-import { ObjectId } from 'mongodb';
 import { ensureDB } from '../utils/db.js';
 
 // BOOK APPOINTMENT - Patient schedules doctor visit
 export const bookAppointment = async (req, res) => {
+  if (!req.auth || !req.auth.id) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
   if (!globalThis.dbReady) {
     // Demo - return fake booking
     return res.status(201).json({
@@ -22,12 +24,10 @@ export const bookAppointment = async (req, res) => {
       return res.status(400).json({ message: 'Missing: department, doctor, date, time, name, phone' });
     }
 
-    // Step 2: Check DB ready
     ensureDB();
 
-    // Step 3: Create appointment data
-    const newAppointment = {
-      _id: new ObjectId(),
+    // Step 2: Use Mongoose model (no ObjectId issues)
+    const newAppointment = await globalThis.Appointment.create({
       department,
       doctor,
       date: new Date(date),
@@ -36,16 +36,12 @@ export const bookAppointment = async (req, res) => {
       phone,
       notes,
       status: 'upcoming',
-      userId: new ObjectId(req.auth.id),
+      userId: req.auth.id,
       createdAt: new Date()
-    };
-
-    // Step 4: Save to database
-    await globalThis.appointmentsCollection.insertOne(newAppointment);
+    });
 
     console.log('✅ Appointment booked:', newAppointment._id);
 
-    // Step 5: Same response format
     res.status(201).json({
       appointment: {
         id: newAppointment._id.toString(),

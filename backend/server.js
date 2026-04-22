@@ -13,12 +13,13 @@ import { healthCheck } from './controllers/authController.js';
 dotenv.config();
 
 const app = express();
+globalThis.dbReady = false;
 
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: ['http://localhost:5173', 'http://localhost:8080'], // Allow both Vite default and configured port
   credentials: true
 }));
 
@@ -47,7 +48,7 @@ const startServer = async () => {
       console.log('  POST /api/tokens/generate');
       console.log('  GET /api/dashboard');
       console.log('  POST /api/appointments/book');
-      console.log('Admin login: drsamar@gmail.com / samarpreet');
+      console.log('Admin login: samar@gmail.com / samarpreet');
     });
   } catch (error) {
     console.error('Server failed to start:', error);

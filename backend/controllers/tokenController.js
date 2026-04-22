@@ -1,9 +1,11 @@
-import { ObjectId } from 'mongodb';
 import { ensureDB } from '../utils/db.js';
 
 // TOKEN QUEUE SYSTEM - Patient gets queue number
 // GET USER TOKENS (with simple stats)
 export const getTokens = async (req, res) => {
+  if (!req.auth || !req.auth.id) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
   if (!globalThis.dbReady) {
     return res.json({ tokens: [], stats: { total: 0, waiting: 0, 'in-progress': 0, completed: 0 } });
   }
@@ -11,12 +13,9 @@ export const getTokens = async (req, res) => {
   try {
     ensureDB();
     
-    // Step 1: Find user's tokens (newest first)
-    const tokens = await globalThis.tokensCollection
-      .find({ userId: new ObjectId(req.auth.id) })
-      .sort({ createdAt: -1 })
-      .toArray();
-
+    // Step 1: Mongoose query
+    const tokens = await globalThis.Token.find({ userId: req.auth.id }).sort({ createdAt: -1 });
+    
     // Step 2: Calculate simple stats
     const stats = {
       total: tokens.length,
@@ -27,7 +26,6 @@ export const getTokens = async (req, res) => {
 
     console.log('Tokens fetched:', stats.total);
     
-    // Same response
     res.json({ tokens, stats });
   } catch (error) {
     console.error('Get tokens error:', error);

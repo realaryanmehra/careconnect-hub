@@ -32,8 +32,12 @@ const App = () => {
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
-              <Route path="/tokens" element={<TokensPage />} />
-              <Route path="/departments" element={<DepartmentsPage />} />
+              <Route path="/tokens" element={
+                <ProtectedRoute><TokensPage /></ProtectedRoute>
+              } />
+              <Route path="/departments" element={
+                <ProtectedRoute><DepartmentsPage /></ProtectedRoute>
+              } />
               <Route path="/appointments" element={
                 <ProtectedRoute><AppointmentsPage /></ProtectedRoute>
               } />
