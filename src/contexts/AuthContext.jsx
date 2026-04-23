@@ -41,6 +41,14 @@ const login = async ({ email, password }) => {
   return data.user;
 };
 
+const loginWithGoogle = async (googleToken) => {
+  const data = await apiRequest("/api/auth/google", {
+    method: "POST", body: JSON.stringify({ token: googleToken })
+  });
+  persistAuth(data.token, data.user);
+  return data.user;
+};
+
 const register = async ({ name, email, password }) => {
   const data = await apiRequest("/api/auth/register", {
     method: "POST", body: JSON.stringify({ name, email, password })
@@ -56,7 +64,7 @@ const logout = () => {
   localStorage.removeItem(STORAGE_USER_KEY);
 };
 
-const value = { token, user, loading, isAuthenticated: Boolean(token), isAdmin: user?.role === 'admin', login, register, logout };
+const value = { token, user, loading, isAuthenticated: Boolean(token), isAdmin: user?.role === 'admin', login, loginWithGoogle, register, logout };
 return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 

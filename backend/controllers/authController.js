@@ -1,6 +1,8 @@
-
 import bcrypt from 'bcryptjs';
 import { safeUser, generateToken } from '../utils/auth.js';
+import { OAuth2Client } from 'google-auth-library';
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Use global flags from server.js (no import needed)
 
@@ -137,6 +139,85 @@ export const healthCheck = (req, res) => {
   });
 };
 
-export default { register, login, getMe, healthCheck };
+// GOOGLE AUTH
+export const googleAuth = async (req, res) => {
+  try {
+    const { token } = req.body;
+    
+    if (!token) {
+      return res.status(400).json({ message: 'Google token required' });
+    }
+
+    let payload;
+    
+    // Check if token is a standard JWT id_token or an access_token
+    if (token.split('.').length === 3) {
+      const ticket = await client.verifyIdToken({
+        idToken: token,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      payload = ticket.getPayload();
+    } else {
+      // It's an access_token from useGoogleLogin
+      const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      payload = await response.json();
+      if (!response.ok) {
+        throw new Error('Invalid Google access token');
+      }
+    }
+
+    const { email, name, sub: googleId } = payload;
+    
+    const normalizedEmail = email.toLowerCase().trim();
+
+    if (!globalThis.dbReady) {
+      let user = globalThis.FALLBACK_DATA.users.find((item) => item.email === normalizedEmail);
+
+      if (!user) {
+        user = {
+          _id: `google-user-${Date.now()}`,
+          name: name.trim(),
+          email: normalizedEmail,
+          passwordHash: await bcrypt.hash(googleId, 10), // random hash
+          role: 'patient',
+          createdAt: new Date()
+        };
+        globalThis.FALLBACK_DATA.users.push(user);
+      }
+
+      return res.json({
+        user: safeUser(user),
+        token: generateToken(user)
+      });
+    }
+
+    let user = await globalThis.User.findOne({ email: normalizedEmail });
+    
+    if (!user) {
+      const passwordHash = await bcrypt.hash(googleId, 10);
+      user = await globalThis.User.create({
+        name,
+        email: normalizedEmail,
+        passwordHash,
+        role: 'patient'
+      });
+    }
+
+    // Admin test user
+    if (user.email === 'samar@gmail.com') user.role = 'admin';
+
+    res.json({
+      user: safeUser(user),
+      token: generateToken(user)
+    });
+  } catch (error) {
+    console.error('Google auth error:', error);
+    res.status(500).json({ message: 'Google authentication failed' });
+  }
+};
+
+export default { register, login, getMe, healthCheck, googleAuth };
 
 
