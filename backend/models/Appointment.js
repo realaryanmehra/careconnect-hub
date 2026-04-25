@@ -9,6 +9,8 @@ const appointmentSchema = new mongoose.Schema({
   patientName: { type: String, required: true },
   phone: { type: String, required: true },
   notes: String,
+  isTelemedicine: { type: Boolean, default: false },
+  meetingLink: { type: String },
   status: { type: String, default: 'upcoming', enum: ['upcoming', 'in-progress', 'completed', 'cancelled'] },
   createdAt: { type: Date, default: Date.now }
 });

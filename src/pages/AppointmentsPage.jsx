@@ -14,11 +14,13 @@ import { useNavigate, Link } from "react-router-dom";
 // ============================================
 // Import UI components
 // ============================================
-import { Calendar, User, Stethoscope, CheckCircle, ArrowRight } from "lucide-react";
+import { Calendar, User, Stethoscope, CheckCircle, ArrowRight, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import Layout from "@/components/Layout";
 import { useToast } from "@/hooks/use-toast";
 import { bookAppointment } from '@/lib/api.js';
@@ -80,6 +82,7 @@ const AppointmentsPage = () => {
   const [patientName, setPatientName] = useState("");       // Patient's full name
   const [phone, setPhone] = useState("");                    // Patient's phone number
   const [notes, setNotes] = useState("");                    // Additional notes
+  const [isTelemedicine, setIsTelemedicine] = useState(false); // Telemedicine toggle
 
   // ============================================
   // STATE: Booking confirmation
@@ -115,7 +118,8 @@ const AppointmentsPage = () => {
         time: selectedTime,
         patientName,
         phone,
-        notes
+        notes,
+        isTelemedicine
       };
 
       // 🔍 ENHANCED DEBUGGING
@@ -183,6 +187,7 @@ const AppointmentsPage = () => {
     setPatientName("");
     setPhone("");
     setNotes("");
+    setIsTelemedicine(false);
     setBooked(null);
   };
 
@@ -230,7 +235,27 @@ const AppointmentsPage = () => {
                 <span className="text-muted-foreground">Time</span>
                 <span className="font-medium text-foreground">{booked.time}</span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Type</span>
+                <span className="font-medium text-primary">
+                  {booked.isTelemedicine ? "Online Video Call" : "In-Person Visit"}
+                </span>
+              </div>
             </div>
+            
+            {booked.isTelemedicine && booked.meetingLink && (
+              <div className="mt-4 mb-2">
+                <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white" asChild>
+                  <a href={booked.meetingLink} target="_blank" rel="noopener noreferrer">
+                    <Video className="mr-2 h-4 w-4" />
+                    Join Video Call Room
+                  </a>
+                </Button>
+                <p className="text-xs text-muted-foreground mt-2">
+                  You can also access this link later from your Dashboard.
+                </p>
+              </div>
+            )}
             
             {/* Button to book another */}
             <Button className="w-full mt-6" onClick={reset}>
@@ -382,6 +407,24 @@ const AppointmentsPage = () => {
                   </h2>
                   
                   <div className="space-y-4">
+                    {/* Telemedicine Toggle */}
+                    <div className="flex items-center space-x-3 bg-muted p-4 rounded-xl border border-border">
+                      <Switch 
+                        id="telemedicine" 
+                        checked={isTelemedicine} 
+                        onCheckedChange={setIsTelemedicine} 
+                      />
+                      <Label htmlFor="telemedicine" className="flex flex-col cursor-pointer">
+                        <span className="font-bold flex items-center gap-2">
+                          <Video className="h-4 w-4 text-primary" />
+                          Online Video Consultation
+                        </span>
+                        <span className="text-xs text-muted-foreground font-normal">
+                          Meet with the doctor from the comfort of your home
+                        </span>
+                      </Label>
+                    </div>
+
                     {/* Date Picker */}
                     <div>
                       <label className="text-sm font-medium text-foreground mb-1.5 block">
@@ -492,6 +535,12 @@ const AppointmentsPage = () => {
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Date & Time</span>
                       <span className="font-medium text-foreground">{selectedDate} at {selectedTime}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Type</span>
+                      <span className="font-medium text-primary">
+                        {isTelemedicine ? "Online Video Call" : "In-Person Visit"}
+                      </span>
                     </div>
                   </div>
                   

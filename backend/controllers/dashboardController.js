@@ -40,7 +40,9 @@ export const getDashboard = async (req, res) => {
       doctor: apt.doctor,
       date: apt.date ? apt.date.toISOString().split('T')[0] : '',
       time: apt.time,
-      status: apt.status
+      status: apt.status,
+      isTelemedicine: apt.isTelemedicine,
+      meetingLink: apt.meetingLink
     }));
 
     console.log('✅ Dashboard loaded for user:', userId);

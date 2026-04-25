@@ -47,7 +47,7 @@ const Index = () => {
                   Book Appointment <ArrowRight className="ml-2 h-4 w-4"/>
                 </Link>
               </Button>
-              <Button size="lg" variant="default" className="bg-green-500 hover:bg-green-600 text-white" asChild>
+              <Button size="lg" variant="default" className="bg-green-500 hover:bg-teal-600 text-white bg bg-inherit" asChild>
                 <Link to="/tokens">Check Token Status</Link>
               </Button>
             </div>
@@ -117,7 +117,7 @@ const Index = () => {
             <Button size="lg" variant="secondary" asChild>
               <Link to="/appointments">Book Appointment</Link>
             </Button>
-            <Button size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10" asChild>
+            <Button size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 bg-inherit" asChild>
               <Link to="/tokens">Get Token</Link>
             </Button>
           </div>

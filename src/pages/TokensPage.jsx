@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getTokens, generateToken } from "@/lib/api";
+import { socket } from "@/lib/socket";
 import { motion } from "framer-motion";
 import { Clock, Hash, User, CheckCircle, AlertCircle, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -39,7 +40,30 @@ const TokensPage = () => {
             }
         };
         fetchTokens();
-    }, [isAuthenticated]);
+
+        // Socket listeners
+        const onTokenGenerated = (newToken) => {
+            setTokens(prev => {
+                // Check if we already have it to avoid duplicates
+                if (prev.find(t => t._id === newToken._id || t.id === newToken.id)) return prev;
+                return [newToken, ...prev];
+            });
+        };
+
+        const onTokenUpdated = (data) => {
+            setTokens(prev => prev.map(t => 
+                (t._id === data.id || t.id === data.id) ? { ...t, status: data.status } : t
+            ));
+        };
+
+        socket.on('tokenGenerated', onTokenGenerated);
+        socket.on('tokenUpdated', onTokenUpdated);
+
+        return () => {
+            socket.off('tokenGenerated', onTokenGenerated);
+            socket.off('tokenUpdated', onTokenUpdated);
+        };
+    }, [isAuthenticated, toast]);
 
     const handleGenerate = async () => {
         if (!name || !dept) {

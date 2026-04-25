@@ -28,7 +28,8 @@ import {
   Pill, 
   Thermometer, 
   Droplets, 
-  TrendingUp 
+  TrendingUp,
+  Video
 } from "lucide-react";
 
 // ============================================
@@ -425,25 +426,41 @@ const DashboardPage = () => {
                     key={apt.id} 
                     className="bg-card border border-border rounded-xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 hover:shadow-medium transition-shadow"
                   >
-                    {/* Calendar Icon */}
+                    {/* Calendar/Video Icon */}
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-secondary">
-                      <Calendar className="h-5 w-5 text-primary"/>
+                      {apt.isTelemedicine ? (
+                        <Video className="h-5 w-5 text-indigo-500"/>
+                      ) : (
+                        <Calendar className="h-5 w-5 text-primary"/>
+                      )}
                     </div>
                     
                     {/* Appointment Details */}
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-foreground">{apt.department}</div>
+                      <div className="font-semibold text-foreground flex items-center gap-2">
+                        {apt.department}
+                        {apt.isTelemedicine && (
+                          <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700 border-indigo-200">Online</Badge>
+                        )}
+                      </div>
                       <div className="text-sm text-muted-foreground">
                         {apt.doctor} • {apt.date} at {apt.time}
                       </div>
                     </div>
                     
-                    {/* Status and ID */}
+                    {/* Status and ID and Join Button */}
                     <div className="flex items-center gap-3">
+                      {apt.isTelemedicine && apt.meetingLink && apt.status !== 'cancelled' && (
+                        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white" asChild>
+                          <a href={apt.meetingLink} target="_blank" rel="noopener noreferrer">
+                            Join Call
+                          </a>
+                        </Button>
+                      )}
                       <Badge variant="outline" className={sc.className}>
                         {sc.label}
                       </Badge>
-                      <span className="text-xs font-mono text-muted-foreground">
+                      <span className="text-xs font-mono text-muted-foreground hidden sm:inline-block">
                         {apt.id}
                       </span>
                     </div>

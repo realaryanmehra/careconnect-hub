@@ -1,4 +1,5 @@
 import { ensureDB } from '../utils/db.js';
+import mongoose from 'mongoose';
 
 // TOKEN QUEUE SYSTEM - Patient gets queue number
 // GET USER TOKENS (with simple stats)
@@ -49,19 +50,19 @@ export const generateToken = async (req, res) => {
     ensureDB();
 
     // Step 1: Get user's current tokens to calculate number
-    const existingTokens = await globalThis.tokensCollection.find({ userId: new ObjectId(req.auth.id) }).toArray();
+    const existingTokens = await globalThis.tokensCollection.find({ userId: new mongoose.Types.ObjectId(req.auth.id) }).toArray();
     const waitingTokens = existingTokens.filter(t => t.status === 'waiting').length;
     
     // Step 2: Create new token data
     const newToken = {
-      _id: new ObjectId(),
+      _id: new mongoose.Types.ObjectId(),
       number: existingTokens.length + 1,
       patientName: patientName.trim(),
       department,
       status: 'waiting',
       position: waitingTokens,
       estimatedTime: `~${(waitingTokens + 1) * 15} minutes`,
-      userId: new ObjectId(req.auth.id),
+      userId: new mongoose.Types.ObjectId(req.auth.id),
       createdAt: new Date()
     };
 
@@ -69,6 +70,10 @@ export const generateToken = async (req, res) => {
     await globalThis.tokensCollection.insertOne(newToken);
 
     console.log('✅ Token generated:', newToken.number);
+
+    if (globalThis.io) {
+      globalThis.io.emit('tokenGenerated', newToken);
+    }
 
     res.status(201).json({ token: newToken });
   } catch (error) {
@@ -95,8 +100,8 @@ export const updateTokenStatus = async (req, res) => {
     // Step 1: Update token if it belongs to user
     const result = await globalThis.tokensCollection.updateOne(
       { 
-        _id: new ObjectId(req.params.id),
-        userId: new ObjectId(req.auth.id)
+        _id: new mongoose.Types.ObjectId(req.params.id),
+        userId: new mongoose.Types.ObjectId(req.auth.id)
       },
       { $set: { status, updatedAt: new Date() } }
     );
@@ -106,6 +111,11 @@ export const updateTokenStatus = async (req, res) => {
     }
 
     console.log('✅ Token status updated:', status);
+    
+    if (globalThis.io) {
+      globalThis.io.emit('tokenUpdated', { id: req.params.id, status });
+    }
+    
     res.json({ message: 'Token updated' });
   } catch (error) {
     console.error('Update token error:', error);

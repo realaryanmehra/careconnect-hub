@@ -19,12 +19,20 @@ export const bookAppointment = async (req, res) => {
 
   try {
     // Step 1: Check required fields
-    const { department, doctor, date, time, patientName, phone, notes = '' } = req.body;
+    const { department, doctor, date, time, patientName, phone, notes = '', isTelemedicine = false } = req.body;
     if (!department || !doctor || !date || !time || !patientName || !phone) {
       return res.status(400).json({ message: 'Missing: department, doctor, date, time, name, phone' });
     }
 
     ensureDB();
+
+    // Generate meeting link if telemedicine
+    let meetingLink = null;
+    if (isTelemedicine) {
+      const uniqueId = Math.random().toString(36).substring(2, 10);
+      const safeName = patientName.replace(/[^a-zA-Z0-9]/g, '');
+      meetingLink = `https://meet.jit.si/CareConnect-${uniqueId}-${safeName}`;
+    }
 
     // Step 2: Use Mongoose model (no ObjectId issues)
     const newAppointment = await globalThis.Appointment.create({
@@ -35,6 +43,8 @@ export const bookAppointment = async (req, res) => {
       patientName,
       phone,
       notes,
+      isTelemedicine,
+      meetingLink,
       status: 'upcoming',
       userId: req.auth.id,
       createdAt: new Date()
@@ -51,7 +61,9 @@ export const bookAppointment = async (req, res) => {
         time: newAppointment.time,
         status: newAppointment.status,
         patientName: newAppointment.patientName,
-        phone: newAppointment.phone
+        phone: newAppointment.phone,
+        isTelemedicine: newAppointment.isTelemedicine,
+        meetingLink: newAppointment.meetingLink
       }
     });
   } catch (error) {
