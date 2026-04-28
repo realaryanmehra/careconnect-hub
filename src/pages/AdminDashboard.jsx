@@ -22,7 +22,9 @@ import { useToast } from '@/components/ui/use-toast';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
-import { Users, Calendar, Activity, Settings, Search, Filter, Ticket, X } from 'lucide-react';
+import { Users, Calendar, Activity, Settings, Search, Filter, Ticket, X, Video } from 'lucide-react';
+import VideoCallModal from '@/components/VideoCallModal';
+import { socket } from '@/lib/socket';
 
 const AdminDashboard = () => {
   const { isAdmin } = useAuth();
@@ -42,6 +44,13 @@ const AdminDashboard = () => {
   const [deleteDialog, setDeleteDialog] = useState({ open: false, type: '', id: '', name: '' });
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [videoCallRoom, setVideoCallRoom] = useState(null);
+
+  const handleStartVideoCall = (tokenId) => {
+    setVideoCallRoom(tokenId);
+    setIsVideoModalOpen(true);
+  };
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -567,6 +576,11 @@ const AdminDashboard = () => {
                             <TableCell>{t.estimatedTime || 'N/A'}</TableCell>
                             <TableCell>{t.createdAt ? new Date(t.createdAt).toLocaleDateString() : 'N/A'}</TableCell>
                             <TableCell className="flex gap-1">
+                              {t.status === 'in-progress' && (
+                                <Button size="sm" variant="outline" className="text-primary border-primary/20 hover:bg-primary hover:text-white" onClick={() => handleStartVideoCall(t.id || t._id)}>
+                                  <Video className="w-4 h-4 mr-1" /> Call
+                                </Button>
+                              )}
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                   <Button size="sm" variant="outline" onClick={() => setEditingToken(t)}>
@@ -930,6 +944,12 @@ const AdminDashboard = () => {
           )}
         </DialogContent>
       </Dialog>
+      <VideoCallModal 
+        isOpen={isVideoModalOpen} 
+        onClose={() => setIsVideoModalOpen(false)} 
+        roomId={videoCallRoom} 
+        socket={socket} 
+      />
     </Layout>
   );
 };

@@ -11,6 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import Layout from "@/components/Layout";
 import { useToast } from "@/hooks/use-toast";
+import VideoCallModal from "@/components/VideoCallModal";
+import { Video } from "lucide-react";
+
 const departments = ["Cardiology", "Neurology", "Orthopedics", "Pediatrics", "Ophthalmology", "General Medicine"];
 const statusConfig = {
     waiting: { label: "Waiting", icon: Clock, className: "bg-warning/10 text-warning border-warning/20" },
@@ -24,7 +27,14 @@ const TokensPage = () => {
     const [name, setName] = useState("");
     const [dept, setDept] = useState("");
     const [searchToken, setSearchToken] = useState("");
+    const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+    const [videoCallRoom, setVideoCallRoom] = useState(null);
     const { toast } = useToast();
+
+    const handleJoinVideoCall = (tokenId) => {
+        setVideoCallRoom(tokenId);
+        setIsVideoModalOpen(true);
+    };
 
     // Fetch tokens
     useEffect(() => {
@@ -191,6 +201,11 @@ const TokensPage = () => {
                         <sc.icon className={`h-3 w-3 mr-1 ${token.status === "in-progress" ? "animate-spin" : ""}`}/>
                         {sc.label}
                       </Badge>
+                      {token.status === "in-progress" && (
+                        <Button variant="outline" size="sm" onClick={() => handleJoinVideoCall(token.id || token._id)} className="h-8 gap-1 border-primary/20 text-primary hover:bg-primary hover:text-white">
+                            <Video className="h-4 w-4" /> Join
+                        </Button>
+                      )}
                     </div>
                   </motion.div>);
         })}
@@ -198,6 +213,12 @@ const TokensPage = () => {
           </motion.div>
         </div>
       </div>
+      <VideoCallModal 
+        isOpen={isVideoModalOpen} 
+        onClose={() => setIsVideoModalOpen(false)} 
+        roomId={videoCallRoom} 
+        socket={socket} 
+      />
     </Layout>);
 };
 export default TokensPage;

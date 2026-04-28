@@ -1,9 +1,11 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import { Server } from 'socket.io';
 import http from 'http';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import connectDB from './config/database.js';
 import authRouter from './routes/auth.js';
 import tokenRouter from './routes/tokens.js';
@@ -12,7 +14,14 @@ import appointmentRouter from './routes/appointments.js';
 import adminRouter from './routes/admin.js';
 import { healthCheck } from './controllers/authController.js';
 
-dotenv.config();
+// Global Error Handlers
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('❌ Uncaught Exception:', err);
+});
 
 const app = express();
 const server = http.createServer(app);
@@ -30,6 +39,41 @@ globalThis.io = io;
 
 io.on('connection', (socket) => {
   console.log('🔗 Client connected to Socket.io:', socket.id);
+  
+  // WebRTC Signaling Events
+  socket.on('join-consultation-room', (roomId) => {
+    socket.join(roomId);
+    console.log(`📹 User ${socket.id} joined room: ${roomId}`);
+    // Notify others in the room
+    socket.to(roomId).emit('user-joined', socket.id);
+  });
+
+  socket.on('webrtc-offer', (data) => {
+    socket.to(data.roomId).emit('webrtc-offer', {
+      offer: data.offer,
+      senderId: socket.id
+    });
+  });
+
+  socket.on('webrtc-answer', (data) => {
+    socket.to(data.roomId).emit('webrtc-answer', {
+      answer: data.answer,
+      senderId: socket.id
+    });
+  });
+
+  socket.on('webrtc-ice-candidate', (data) => {
+    socket.to(data.roomId).emit('webrtc-ice-candidate', {
+      candidate: data.candidate,
+      senderId: socket.id
+    });
+  });
+
+  socket.on('leave-consultation-room', (roomId) => {
+    socket.leave(roomId);
+    socket.to(roomId).emit('user-left', socket.id);
+  });
+
   socket.on('disconnect', () => {
     console.log('❌ Client disconnected:', socket.id);
   });
