@@ -13,14 +13,14 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedToken = localStorage.getItem(STORAGE_TOKEN_KEY);
-    const savedUser = localStorage.getItem(STORAGE_USER_KEY);
+    const savedToken = sessionStorage.getItem(STORAGE_TOKEN_KEY);
+    const savedUser = sessionStorage.getItem(STORAGE_USER_KEY);
     if (savedToken) setToken(savedToken);
     if (savedUser) {
       try {
         setUser(JSON.parse(savedUser));
       } catch {
-        localStorage.removeItem(STORAGE_USER_KEY);
+        sessionStorage.removeItem(STORAGE_USER_KEY);
       }
     }
     setLoading(false);
@@ -29,8 +29,8 @@ export const AuthProvider = ({ children }) => {
 const persistAuth = (token, user) => {
   setToken(token);
   setUser(user);
-  localStorage.setItem(STORAGE_TOKEN_KEY, token);
-  localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(user));
+  sessionStorage.setItem(STORAGE_TOKEN_KEY, token);
+  sessionStorage.setItem(STORAGE_USER_KEY, JSON.stringify(user));
 };
 
 const login = async ({ email, password }) => {
@@ -60,8 +60,8 @@ const register = async ({ name, email, password }) => {
 const logout = () => {
   setToken(null);
   setUser(null);
-  localStorage.removeItem(STORAGE_TOKEN_KEY);
-  localStorage.removeItem(STORAGE_USER_KEY);
+  sessionStorage.removeItem(STORAGE_TOKEN_KEY);
+  sessionStorage.removeItem(STORAGE_USER_KEY);
 };
 
 const value = { token, user, loading, isAuthenticated: Boolean(token), isAdmin: user?.role === 'admin', login, loginWithGoogle, register, logout };

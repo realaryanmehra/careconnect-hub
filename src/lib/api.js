@@ -54,7 +54,7 @@ const response = await fetch(`http://localhost:5000${path}`, {
 // Authenticated request helper
 // ============================================
 export const authRequest = async (path, options = {}) => {
-  const token = localStorage.getItem('careconnect_auth_token');
+  const token = sessionStorage.getItem('careconnect_auth_token');
   if (!token) throw new Error('No auth token found');
   
   // 🔍 DEBUG LOGGING - Log exact request details
@@ -81,8 +81,8 @@ const response = await apiRequest(path, {
   
   // Auto-logout on 401 (token expired)
   if (!response.ok && response.status === 401) {
-    localStorage.removeItem('careconnect_auth_token');
-    localStorage.removeItem('careconnect_auth_user');
+    sessionStorage.removeItem('careconnect_auth_token');
+    sessionStorage.removeItem('careconnect_auth_user');
     window.location.href = '/login';
   }
   
