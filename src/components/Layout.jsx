@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import Header from "./Header";
 import Footer from "./Footer";
 import { socket } from "@/lib/socket";
@@ -10,6 +12,7 @@ import { Button } from "@/components/ui/button";
 const Layout = ({ children }) => {
     const { user } = useAuth();
     const { toast } = useToast();
+    const location = useLocation();
 
     useEffect(() => {
         if (!user) return;
@@ -59,7 +62,18 @@ const Layout = ({ children }) => {
     return (
         <div className="min-h-screen flex flex-col">
             <Header />
-            <main className="flex-1">{children}</main>
+            <AnimatePresence mode="wait">
+                <motion.main 
+                    key={location.pathname}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className="flex-1"
+                >
+                    {children}
+                </motion.main>
+            </AnimatePresence>
             <Footer />
         </div>
     );

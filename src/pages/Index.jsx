@@ -28,17 +28,17 @@ const Index = () => {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
           <img src={heroImage} alt="Modern hospital facility" className="w-full h-full object-cover"/>
-          <div className="absolute inset-0 bg-foreground/60"/>
+          <div className="absolute inset-0 bg-slate-900/60 dark:bg-black/80"/>
         </div>
         <div className="relative container py-24 md:py-36">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }} className="max-w-2xl space-y-6">
-            <span className="inline-flex items-center gap-2 rounded-full bg-primary/20 px-4 py-1.5 text-sm font-medium text-primary-foreground backdrop-blur-sm">
+            <span className="inline-flex items-center gap-2 rounded-full bg-primary/20 px-4 py-1.5 text-sm font-medium text-white backdrop-blur-sm">
               <Shield className="h-4 w-4"/> Trusted Healthcare Partner
             </span>
-            <h1 className="text-4xl md:text-6xl font-extrabold text-primary-foreground leading-tight">
+            <h1 className="text-4xl md:text-6xl font-extrabold text-white leading-tight">
               Your Health, <br />Our <span className="text-primary">Priority</span>
             </h1>
-            <p className="text-lg text-primary-foreground/80 max-w-lg">
+            <p className="text-lg text-white/80 max-w-lg">
               Experience seamless hospital management with smart token queuing, instant appointment booking, and world-class medical care.
             </p>
             <div className="flex flex-wrap gap-3">
@@ -47,7 +47,7 @@ const Index = () => {
                   Book Appointment <ArrowRight className="ml-2 h-4 w-4"/>
                 </Link>
               </Button>
-              <Button size="lg" variant="default" className="bg-green-500 hover:bg-teal-600 text-white bg bg-inherit" asChild>
+              <Button size="lg" variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-md" asChild>
                 <Link to="/tokens">Check Token Status</Link>
               </Button>
             </div>

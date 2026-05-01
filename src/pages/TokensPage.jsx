@@ -120,7 +120,7 @@ const TokensPage = () => {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Generate Token */}
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="lg:col-span-1">
-            <div className="bg-card border border-border rounded-xl p-6 shadow-soft sticky top-24">
+            <div className="glass-card rounded-xl p-6 sticky top-24">
               <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
                 <Plus className="h-5 w-5 text-primary"/> Generate Token
               </h2>
@@ -178,7 +178,7 @@ const TokensPage = () => {
                 </div>)}
               {filteredTokens.map((token, i) => {
             const sc = statusConfig[token.status];
-            return (<motion.div key={token.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="bg-card border border-border rounded-xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 hover:shadow-medium transition-shadow">
+            return (<motion.div key={token.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="glass-card rounded-xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 hover:-translate-y-1 hover:shadow-lg">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary text-primary font-extrabold text-lg">
                       #{token.number}
                     </div>

@@ -1,14 +1,16 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Activity } from "lucide-react";
+import { Menu, X, Activity, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const Header = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
     const location = useLocation();
     const { isAuthenticated, user, logout, isAdmin } = useAuth();
+    const { theme, toggleTheme } = useTheme();
     
     // Different nav items for admin vs regular users
     const navItems = isAdmin
@@ -44,6 +46,9 @@ const Header = () => {
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-foreground">
+            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </Button>
           {!isAuthenticated && (<>
               <Button variant="outline" size="sm" asChild>
                 <Link to="/login">Login</Link>
@@ -59,9 +64,14 @@ const Header = () => {
         </div>
 
         {/* Mobile toggle */}
-        <button className="md:hidden p-2 text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
-          {mobileOpen ? <X className="h-5 w-5"/> : <Menu className="h-5 w-5"/>}
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-foreground">
+            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </Button>
+          <button className="p-2 text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
+            {mobileOpen ? <X className="h-5 w-5"/> : <Menu className="h-5 w-5"/>}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}
