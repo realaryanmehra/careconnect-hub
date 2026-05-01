@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getTokens, generateToken } from "@/lib/api";
 import { socket } from "@/lib/socket";
 import { motion } from "framer-motion";
-import { Clock, Hash, User, CheckCircle, AlertCircle, Loader2, Plus } from "lucide-react";
+import { Clock, Hash, User, CheckCircle, AlertCircle, Loader2, Plus, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -172,10 +172,28 @@ const TokensPage = () => {
             </div>
 
             <div className="space-y-3">
-              {filteredTokens.length === 0 && (<div className="text-center py-12 text-muted-foreground">
-                  <AlertCircle className="h-10 w-10 mx-auto mb-3 opacity-50"/>
-                  <p>No tokens found.</p>
-                </div>)}
+              {filteredTokens.length === 0 && (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-border/60 rounded-2xl bg-card/30 backdrop-blur-sm"
+                >
+                  <div className="bg-primary/10 p-4 rounded-full mb-4">
+                    <ClipboardList className="h-10 w-10 text-primary opacity-80" />
+                  </div>
+                  <h3 className="text-lg font-bold text-foreground mb-1">No Tokens Found</h3>
+                  <p className="text-sm text-muted-foreground max-w-sm mb-6">
+                    {searchToken 
+                      ? "We couldn't find any tokens matching your search criteria. Try a different name or number." 
+                      : "The queue is currently empty. Generate a new token to get started."}
+                  </p>
+                  {!searchToken && (
+                    <Button variant="outline" className="hover:bg-primary hover:text-white transition-colors" onClick={() => document.querySelector('input[placeholder="Enter patient name"]')?.focus()}>
+                      <Plus className="mr-2 h-4 w-4" /> Create First Token
+                    </Button>
+                  )}
+                </motion.div>
+              )}
               {filteredTokens.map((token, i) => {
             const sc = statusConfig[token.status];
             return (<motion.div key={token.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="glass-card rounded-xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 hover:-translate-y-1 hover:shadow-lg">

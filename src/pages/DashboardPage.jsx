@@ -304,23 +304,33 @@ const DashboardPage = () => {
             {/* Vitals Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {vitals.map((v) => (
-                <div key={v.label} className="bg-muted rounded-xl p-4 text-center">
-                  {/* Icon */}
-                  <v.icon className="h-5 w-5 text-primary mx-auto mb-2"/>
+                <div key={v.label} className="stat-widget rounded-2xl p-5 text-center flex flex-col items-center justify-center relative overflow-hidden group">
+                  {/* Decorative background glow */}
+                  <div className="absolute -inset-2 bg-gradient-to-tr from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full blur-xl z-0"/>
                   
-                  {/* Value */}
-                  <div className="text-2xl font-extrabold text-foreground">{v.value}</div>
-                  
-                  {/* Unit */}
-                  <div className="text-xs text-muted-foreground">{v.unit}</div>
-                  
-                  {/* Label */}
-                  <div className="text-xs text-muted-foreground mt-1">{v.label}</div>
-                  
-                  {/* Trend indicator (if elevated) */}
-                  {v.trend === "up" && (
-                    <TrendingUp className="h-3 w-3 text-warning mx-auto mt-1"/>
-                  )}
+                  {/* Content (z-10 to stay above glow) */}
+                  <div className="relative z-10 flex flex-col items-center w-full">
+                    {/* Icon */}
+                    <div className="bg-primary/10 p-2.5 rounded-full mb-3">
+                      <v.icon className="h-5 w-5 text-primary"/>
+                    </div>
+                    
+                    {/* Value */}
+                    <div className="text-3xl font-extrabold text-foreground tracking-tighter">{v.value}</div>
+                    
+                    {/* Unit */}
+                    <div className="text-xs text-muted-foreground/70 font-mono mt-0.5">{v.unit}</div>
+                    
+                    {/* Label */}
+                    <div className="text-sm font-medium text-foreground mt-2">{v.label}</div>
+                    
+                    {/* Trend indicator (if elevated) */}
+                    {v.trend === "up" && (
+                      <div className="flex items-center gap-1 mt-2 text-[10px] uppercase font-bold text-warning bg-warning/10 px-2 py-0.5 rounded-full">
+                        <TrendingUp className="h-3 w-3"/> Elevated
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -470,8 +480,17 @@ const DashboardPage = () => {
               
               {/* Empty State */}
               {filteredApts.length === 0 && (
-                <div className="text-center py-10 text-muted-foreground">
-                  No appointments found.
+                <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-border/60 rounded-xl bg-card/30">
+                  <div className="bg-primary/10 p-3 rounded-full mb-3">
+                    <Calendar className="h-8 w-8 text-primary opacity-80" />
+                  </div>
+                  <h3 className="font-bold text-foreground">No Appointments</h3>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-sm mb-4">
+                    {aptFilter === "all" ? "You don't have any appointments scheduled." : `You have no ${aptFilter} appointments.`}
+                  </p>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/appointments">Book an Appointment</Link>
+                  </Button>
                 </div>
               )}
             </div>
@@ -523,6 +542,19 @@ const DashboardPage = () => {
                 </div>
               ))}
             </div>
+
+            {/* Empty State for Records */}
+            {filteredRecords.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-border/60 rounded-xl bg-card/30 mt-4">
+                <div className="bg-primary/10 p-3 rounded-full mb-3">
+                  <FileText className="h-8 w-8 text-primary opacity-80" />
+                </div>
+                <h3 className="font-bold text-foreground">No Records Found</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  We couldn't find any medical records matching your search.
+                </p>
+              </div>
+            )}
           </TabsContent>
 
           {/* ============================================ */}
@@ -563,6 +595,19 @@ const DashboardPage = () => {
                 </div>
               ))}
             </div>
+
+            {/* Empty State for Prescriptions */}
+            {prescriptions.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-border/60 rounded-xl bg-card/30 mt-4">
+                <div className="bg-primary/10 p-3 rounded-full mb-3">
+                  <Pill className="h-8 w-8 text-primary opacity-80" />
+                </div>
+                <h3 className="font-bold text-foreground">No Prescriptions</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  You don't have any active prescriptions at this time.
+                </p>
+              </div>
+            )}
           </TabsContent>
           
         </Tabs>

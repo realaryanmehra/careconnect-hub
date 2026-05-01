@@ -254,81 +254,87 @@ const AdminDashboard = () => {
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Users className="w-4 h-4" />
+          <Card className="stat-widget overflow-hidden relative group">
+            <div className="absolute -inset-2 bg-gradient-to-tr from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full blur-xl z-0"/>
+            <CardHeader className="pb-3 relative z-10">
+              <CardTitle className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
+                <Users className="w-4 h-4 text-primary" />
                 Total Users
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalUsers}</div>
-              <p className="text-xs text-muted-foreground mt-1">Registered patients</p>
+            <CardContent className="relative z-10">
+              <div className="text-4xl font-extrabold tracking-tighter text-foreground">{stats.totalUsers}</div>
+              <p className="text-xs text-muted-foreground/70 mt-1 font-medium">Registered patients</p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
+          <Card className="stat-widget overflow-hidden relative group">
+            <div className="absolute -inset-2 bg-gradient-to-tr from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full blur-xl z-0"/>
+            <CardHeader className="pb-3 relative z-10">
+              <CardTitle className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
+                <Calendar className="w-4 h-4 text-primary" />
                 Appointments
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalAppointments}</div>
-              <p className="text-xs text-muted-foreground mt-1">All time</p>
+            <CardContent className="relative z-10">
+              <div className="text-4xl font-extrabold tracking-tighter text-foreground">{stats.totalAppointments}</div>
+              <p className="text-xs text-muted-foreground/70 mt-1 font-medium">All time</p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Ticket className="w-4 h-4" />
+          <Card className="stat-widget overflow-hidden relative group">
+            <div className="absolute -inset-2 bg-gradient-to-tr from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full blur-xl z-0"/>
+            <CardHeader className="pb-3 relative z-10">
+              <CardTitle className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
+                <Ticket className="w-4 h-4 text-primary" />
                 Queue Tokens
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalTokens}</div>
-              <p className="text-xs text-muted-foreground mt-1">All tokens</p>
+            <CardContent className="relative z-10">
+              <div className="text-4xl font-extrabold tracking-tighter text-foreground">{stats.totalTokens}</div>
+              <p className="text-xs text-muted-foreground/70 mt-1 font-medium">All tokens</p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Activity className="w-4 h-4" />
+          <Card className="stat-widget overflow-hidden relative group">
+            <div className="absolute -inset-2 bg-gradient-to-tr from-info/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full blur-xl z-0"/>
+            <CardHeader className="pb-3 relative z-10">
+              <CardTitle className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
+                <Activity className="w-4 h-4 text-info" />
                 Active
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.activeAppointments + stats.activeTokens}</div>
-              <p className="text-xs text-muted-foreground mt-1">Appointments & tokens</p>
+            <CardContent className="relative z-10">
+              <div className="text-4xl font-extrabold tracking-tighter text-foreground">{stats.activeAppointments + stats.activeTokens}</div>
+              <p className="text-xs text-muted-foreground/70 mt-1 font-medium">Appointments & tokens</p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Settings className="w-4 h-4" />
+          <Card className="stat-widget overflow-hidden relative group">
+            <div className="absolute -inset-2 bg-gradient-to-tr from-success/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full blur-xl z-0"/>
+            <CardHeader className="pb-3 relative z-10">
+              <CardTitle className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
+                <Settings className="w-4 h-4 text-success" />
                 Completed
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.completedAppointments}</div>
-              <p className="text-xs text-muted-foreground mt-1">Appointments</p>
+            <CardContent className="relative z-10">
+              <div className="text-4xl font-extrabold tracking-tighter text-foreground">{stats.completedAppointments}</div>
+              <p className="text-xs text-muted-foreground/70 mt-1 font-medium">Appointments</p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Activity className="w-4 h-4" />
+          <Card className="stat-widget overflow-hidden relative group">
+            <div className="absolute -inset-2 bg-gradient-to-tr from-warning/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full blur-xl z-0"/>
+            <CardHeader className="pb-3 relative z-10">
+              <CardTitle className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
+                <Activity className="w-4 h-4 text-warning" />
                 In Queue
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.activeTokens}</div>
-              <p className="text-xs text-muted-foreground mt-1">Waiting/In-progress</p>
+            <CardContent className="relative z-10">
+              <div className="text-4xl font-extrabold tracking-tighter text-foreground">{stats.activeTokens}</div>
+              <p className="text-xs text-muted-foreground/70 mt-1 font-medium">Waiting/In-progress</p>
             </CardContent>
           </Card>
         </div>

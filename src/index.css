@@ -127,6 +127,15 @@
   .dark .glass-card {
     @apply border-white/10 bg-card/40;
   }
+  
+  .stat-widget {
+    @apply bg-gradient-to-br from-card/80 to-muted/50 backdrop-blur-md border border-white/40 shadow-soft transition-all duration-300 hover:shadow-medium hover:-translate-y-1;
+  }
+  
+  .dark .stat-widget {
+    @apply border-white/10 from-card/40 to-muted/20;
+  }
+
   .gradient-primary {
     background: var(--gradient-primary);
   }
