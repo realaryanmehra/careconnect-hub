@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import { safeUser, generateToken } from '../utils/auth.js';
 import { OAuth2Client } from 'google-auth-library';
 import crypto from 'crypto';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -248,34 +248,30 @@ export const forgotPassword = async (req, res) => {
       
       console.log(`[DEV MODE] Password reset link for ${normalizedEmail}: ${resetLink}`);
       
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: normalizedEmail,
-        subject: 'CareConnect Hub - Password Reset',
-        html: `
-          <h1>Password Reset Request</h1>
-          <p>You requested to reset your password. Click the link below to set a new password:</p>
-          <a href="${resetLink}" style="padding: 10px 20px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 10px;">Reset Password</a>
-          <p style="margin-top: 20px; font-size: 12px; color: #666;">This link will expire in 1 hour. If you did not request this, please ignore this email.</p>
-        `
-      };
-
       try {
-        const transporter = nodemailer.createTransport({
-          service: 'gmail',
-          auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-          }
-        });
+        const resend = new Resend(process.env.RESEND_API_KEY);
         
         // Fire and forget to prevent hanging the request
-        transporter.sendMail(mailOptions)
-          .then(() => console.log(`Reset email sent to ${normalizedEmail}`))
-          .catch(err => console.error('Error sending email:', err));
+        resend.emails.send({
+          from: 'onboarding@resend.dev',
+          to: normalizedEmail,
+          subject: 'CareConnect Hub - Password Reset',
+          html: `
+            <h1>Password Reset Request</h1>
+            <p>You requested to reset your password. Click the link below to set a new password:</p>
+            <a href="${resetLink}" style="padding: 10px 20px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 10px;">Reset Password</a>
+            <p style="margin-top: 20px; font-size: 12px; color: #666;">This link will expire in 1 hour. If you did not request this, please ignore this email.</p>
+          `
+        }).then((response) => {
+          if (response.error) {
+            console.error('Resend API Error:', response.error);
+          } else {
+            console.log(`Reset email sent via Resend to ${normalizedEmail}`);
+          }
+        }).catch(err => console.error('Error sending email via Resend:', err));
           
       } catch (err) {
-        console.error('Error setting up email transporter:', err);
+        console.error('Error setting up Resend API:', err);
       }
       
       return res.status(200).json({ message: 'If an account exists, a password reset link has been sent.' });
@@ -298,34 +294,30 @@ export const forgotPassword = async (req, res) => {
     const resetLink = `${frontendUrl}/reset-password/${resetToken}`;
     console.log(`Password reset link for ${normalizedEmail}: ${resetLink}`);
 
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: normalizedEmail,
-      subject: 'CareConnect Hub - Password Reset',
-      html: `
-        <h1>Password Reset Request</h1>
-        <p>You requested to reset your password. Click the link below to set a new password:</p>
-        <a href="${resetLink}" style="padding: 10px 20px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 10px;">Reset Password</a>
-        <p style="margin-top: 20px; font-size: 12px; color: #666;">This link will expire in 1 hour. If you did not request this, please ignore this email.</p>
-      `
-    };
-
     try {
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS
-        }
-      });
+      const resend = new Resend(process.env.RESEND_API_KEY);
       
       // Fire and forget to prevent hanging the request
-      transporter.sendMail(mailOptions)
-        .then(() => console.log(`Reset email sent to ${normalizedEmail}`))
-        .catch(err => console.error('Error sending email:', err));
+      resend.emails.send({
+        from: 'onboarding@resend.dev',
+        to: normalizedEmail,
+        subject: 'CareConnect Hub - Password Reset',
+        html: `
+          <h1>Password Reset Request</h1>
+          <p>You requested to reset your password. Click the link below to set a new password:</p>
+          <a href="${resetLink}" style="padding: 10px 20px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 10px;">Reset Password</a>
+          <p style="margin-top: 20px; font-size: 12px; color: #666;">This link will expire in 1 hour. If you did not request this, please ignore this email.</p>
+        `
+      }).then((response) => {
+        if (response.error) {
+          console.error('Resend API Error:', response.error);
+        } else {
+          console.log(`Reset email sent via Resend to ${normalizedEmail}`);
+        }
+      }).catch(err => console.error('Error sending email via Resend:', err));
         
     } catch (err) {
-      console.error('Error setting up email transporter:', err);
+      console.error('Error setting up Resend API:', err);
     }
 
     res.status(200).json({ message: 'If an account exists, a password reset link has been sent.' });
