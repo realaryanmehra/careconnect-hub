@@ -405,7 +405,12 @@ const AdminDashboard = () => {
                           <TableRow key={a._id}>
                             <TableCell className="font-medium">{a.patientName}</TableCell>
                             <TableCell>{a.doctor}</TableCell>
-                            <TableCell>{a.department}</TableCell>
+                            <TableCell>
+                              {a.department}
+                              {a.isTelemedicine && (
+                                <Badge variant="outline" className="ml-2 text-xs bg-indigo-50 text-indigo-700 border-indigo-200">Online</Badge>
+                              )}
+                            </TableCell>
                             <TableCell>{a.date} {a.time}</TableCell>
                             <TableCell>{a.phone || 'N/A'}</TableCell>
                             <TableCell>
@@ -424,6 +429,13 @@ const AdminDashboard = () => {
                               </Badge>
                             </TableCell>
                             <TableCell className="flex gap-1">
+                              {a.isTelemedicine && a.meetingLink && a.status !== 'cancelled' && (
+                                <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white" title="Join Video Call" asChild>
+                                  <a href={a.meetingLink} target="_blank" rel="noopener noreferrer">
+                                    <Video className="w-4 h-4" />
+                                  </a>
+                                </Button>
+                              )}
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                   <Button size="sm" variant="outline" onClick={() => setEditingAppointment(a)}>

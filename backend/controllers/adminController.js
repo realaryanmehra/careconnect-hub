@@ -59,6 +59,8 @@ export const getAllAppointments = async (req, res) => {
       phone: apt.phone,
       notes: apt.notes || '',
       status: apt.status || 'upcoming',
+      isTelemedicine: apt.isTelemedicine,
+      meetingLink: apt.meetingLink,
       userId: apt.userId?.toString() || null,
       createdAt: apt.createdAt,
       updatedAt: apt.updatedAt
@@ -169,7 +171,9 @@ export const getStatistics = async (req, res) => {
         department: apt.department,
         date: apt.date,
         time: apt.time,
-        status: apt.status || 'upcoming'
+        status: apt.status || 'upcoming',
+        isTelemedicine: apt.isTelemedicine,
+        meetingLink: apt.meetingLink
       })),
       recentTokens: recentTokens.map(token => ({
         id: token._id.toString(),

@@ -123,11 +123,11 @@ const AppointmentsPage = () => {
       };
 
       // 🔍 ENHANCED DEBUGGING
-      console.log('🔍 Token exists:', !!localStorage.getItem('careconnect_auth_token'));
+      console.log('🔍 Token exists:', !!sessionStorage.getItem('careconnect_auth_token'));
       console.log('🧪 Frontend aptData BEFORE API:', aptData);
 
       // Check auth before API call
-      const token = localStorage.getItem('careconnect_auth_token');
+      const token = sessionStorage.getItem('careconnect_auth_token');
       if (!token) {
         throw new Error('No auth token - please login again');
       }
