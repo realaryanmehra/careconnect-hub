@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getTokens, generateToken } from "@/lib/api";
+import { getTokens, generateToken, getDepartments } from "@/lib/api";
 import { socket } from "@/lib/socket";
 import { motion } from "framer-motion";
 import { Clock, Hash, User, CheckCircle, AlertCircle, Loader2, Plus, ClipboardList } from "lucide-react";
@@ -14,7 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 import VideoCallModal from "@/components/VideoCallModal";
 import { Video } from "lucide-react";
 
-const departments = ["Cardiology", "Neurology", "Orthopedics", "Pediatrics", "Ophthalmology", "General Medicine"];
+// We will fetch departments from API dynamically now.
+// const departments = ["Cardiology", "Neurology", "Orthopedics", "Pediatrics", "Ophthalmology", "General Medicine"];
 const statusConfig = {
     waiting: { label: "Waiting", icon: Clock, className: "bg-warning/10 text-warning border-warning/20" },
     "in-progress": { label: "In Progress", icon: Loader2, className: "bg-info/10 text-info border-info/20" },
@@ -30,6 +31,7 @@ const TokensPage = () => {
     const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
     const [videoCallRoom, setVideoCallRoom] = useState(null);
     const { toast } = useToast();
+    const [departments, setDepartments] = useState([]);
 
     const handleJoinVideoCall = (tokenId) => {
         setVideoCallRoom(tokenId);
@@ -39,17 +41,21 @@ const TokensPage = () => {
     // Fetch tokens
     useEffect(() => {
         if (!isAuthenticated) return;
-        const fetchTokens = async () => {
+        const fetchTokensAndDepts = async () => {
             try {
-                const data = await getTokens();
-                setTokens(data.tokens || []);
+                const [tokenData, deptData] = await Promise.all([
+                    getTokens(),
+                    getDepartments()
+                ]);
+                setTokens(tokenData.tokens || []);
+                setDepartments(deptData.departments?.map(d => d.name) || []);
             } catch (error) {
                 toast({ title: "Error loading tokens", description: error.message, variant: "destructive" });
             } finally {
                 setLoading(false);
             }
         };
-        fetchTokens();
+        fetchTokensAndDepts();
 
         // Socket listeners
         const onTokenGenerated = (newToken) => {

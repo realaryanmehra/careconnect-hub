@@ -25,6 +25,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Users, Calendar, Activity, Settings, Search, Filter, Ticket, X, Video } from 'lucide-react';
 import VideoCallModal from '@/components/VideoCallModal';
 import { socket } from '@/lib/socket';
+import AdminDepartmentsTab from '@/components/AdminDepartmentsTab';
 
 const AdminDashboard = () => {
   const { isAdmin } = useAuth();
@@ -345,6 +346,7 @@ const AdminDashboard = () => {
             <TabsTrigger value="appointments">Appointments</TabsTrigger>
             <TabsTrigger value="tokens">Queue Tokens</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="departments">Doctors & Depts</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -757,6 +759,11 @@ const AdminDashboard = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Departments Tab */}
+          <TabsContent value="departments" className="space-y-4">
+            <AdminDepartmentsTab />
           </TabsContent>
 
           {/* Settings Tab */}

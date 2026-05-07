@@ -171,3 +171,29 @@ export const deleteUserAdmin = (id) => authRequest(`/api/admin/users/${id}`, {
   method: 'DELETE'
 });
 
+// Department API Helpers
+export const getDepartments = () => apiRequest('/api/departments'); // Public route
+
+export const createDepartment = (data) => authRequest('/api/departments', {
+  method: 'POST',
+  body: JSON.stringify(data)
+});
+
+export const updateDepartment = (id, data) => authRequest(`/api/departments/${id}`, {
+  method: 'PUT',
+  body: JSON.stringify(data)
+});
+
+export const deleteDepartment = (id) => authRequest(`/api/departments/${id}`, {
+  method: 'DELETE'
+});
+
+export const addDoctorToDepartment = (departmentId, data) => authRequest(`/api/departments/${departmentId}/doctors`, {
+  method: 'POST',
+  body: JSON.stringify(data)
+});
+
+export const removeDoctorFromDepartment = (departmentId, doctorId) => authRequest(`/api/departments/${departmentId}/doctors/${doctorId}`, {
+  method: 'DELETE'
+});
+

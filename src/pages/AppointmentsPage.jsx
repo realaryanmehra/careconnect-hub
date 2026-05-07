@@ -23,20 +23,14 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import Layout from "@/components/Layout";
 import { useToast } from "@/hooks/use-toast";
-import { bookAppointment } from '@/lib/api.js';
+import { bookAppointment, getDepartments } from '@/lib/api.js';
 
 // ============================================
 // STATIC DATA - Departments and Doctors
 // ============================================
 // This is sample data - in a real app, this would come from an API
-const departments = [
-  { name: "Cardiology", doctors: ["Dr. Anil Kapoor", "Dr. Meena Singh"] },
-  { name: "Neurology", doctors: ["Dr. Rajesh Gupta", "Dr. Sonal Verma"] },
-  { name: "Orthopedics", doctors: ["Dr. Vikram Rao", "Dr. Deepa Joshi"] },
-  { name: "Pediatrics", doctors: ["Dr. Kavita Sharma", "Dr. Ravi Mishra"] },
-  { name: "Ophthalmology", doctors: ["Dr. Sunita Patel", "Dr. Aman Khanna"] },
-  { name: "General Medicine", doctors: ["Dr. Pooja Reddy", "Dr. Nikhil Bhatt"] },
-];
+// We will fetch departments from API dynamically now.
+// const departments = [ ... ];
 
 // Available time slots for appointments
 const timeSlots = [
@@ -63,6 +57,20 @@ const AppointmentsPage = () => {
       navigate("/login");
     }
   }, [isAuthenticated, authLoading, navigate, toast]);
+
+  // Fetch departments
+  const [departments, setDepartments] = useState([]);
+  useEffect(() => {
+    const loadDepts = async () => {
+      try {
+        const res = await getDepartments();
+        setDepartments(res.departments || []);
+      } catch (error) {
+        console.error("Failed to load departments:", error);
+      }
+    };
+    loadDepts();
+  }, []);
 
   // ============================================
   // STATE: Current step in the form (1, 2, or 3)
@@ -94,7 +102,7 @@ const AppointmentsPage = () => {
   // Get doctors for selected department
   // ============================================
   // This updates the doctor dropdown when department changes
-  const currentDoctors = departments.find(d => d.name === selectedDept)?.doctors || [];
+  const currentDoctors = departments.find(d => d.name === selectedDept)?.doctors?.map(doc => doc.name) || [];
 
   // ============================================
   // handleBook - Confirm the appointment

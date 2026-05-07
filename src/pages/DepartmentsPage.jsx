@@ -3,19 +3,34 @@ import { Heart, Brain, Bone, Baby, Eye, Stethoscope, ArrowRight } from "lucide-r
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
-const departments = [
-    { name: "Cardiology", icon: Heart, description: "Comprehensive heart care including diagnostics, treatment, and rehabilitation for all cardiovascular conditions.", doctors: 8, color: "text-destructive", bg: "bg-destructive/10" },
-    { name: "Neurology", icon: Brain, description: "Expert diagnosis and treatment of disorders of the nervous system including brain, spinal cord, and peripheral nerves.", doctors: 6, color: "text-info", bg: "bg-info/10" },
-    { name: "Orthopedics", icon: Bone, description: "Specialized care for musculoskeletal conditions, sports injuries, joint replacements, and fracture treatment.", doctors: 7, color: "text-accent", bg: "bg-accent/10" },
-    { name: "Pediatrics", icon: Baby, description: "Dedicated healthcare for infants, children, and adolescents with compassionate and specialized medical attention.", doctors: 5, color: "text-success", bg: "bg-success/10" },
-    { name: "Ophthalmology", icon: Eye, description: "Complete eye care services including vision correction, cataract surgery, and treatment of eye diseases.", doctors: 4, color: "text-primary", bg: "bg-primary/10" },
-    { name: "General Medicine", icon: Stethoscope, description: "Primary healthcare services for routine check-ups, preventive care, and management of chronic conditions.", doctors: 10, color: "text-muted-foreground", bg: "bg-muted" },
-];
+import { useState, useEffect } from "react";
+import * as Icons from "lucide-react";
+import { getDepartments } from "@/lib/api";
+
+const colors = ["text-destructive", "text-info", "text-accent", "text-success", "text-primary", "text-muted-foreground"];
+const bgs = ["bg-destructive/10", "bg-info/10", "bg-accent/10", "bg-success/10", "bg-primary/10", "bg-muted"];
 const fadeUp = {
     hidden: { opacity: 0, y: 20 },
     visible: (i) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, duration: 0.5 } }),
 };
 const DepartmentsPage = () => {
+    const [departments, setDepartments] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchDepts = async () => {
+            try {
+                const res = await getDepartments();
+                setDepartments(res.departments || []);
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDepts();
+    }, []);
+
     return (<Layout>
       <div className="container py-10">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -24,16 +39,23 @@ const DepartmentsPage = () => {
         </motion.div>
 
         <div className="grid md:grid-cols-2 gap-6">
-          {departments.map((dept, i) => (<motion.div key={dept.name} custom={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="bg-card border border-border rounded-xl p-8 hover:shadow-strong transition-all group">
+          {loading ? (
+            <div className="col-span-2 text-center py-10"><Icons.Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" /></div>
+          ) : departments.map((dept, i) => {
+            const Icon = Icons[dept.icon] || Icons.Stethoscope;
+            const color = colors[i % colors.length];
+            const bg = bgs[i % bgs.length];
+            return (
+            <motion.div key={dept._id || dept.name} custom={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="bg-card border border-border rounded-xl p-8 hover:shadow-strong transition-all group">
               <div className="flex items-start gap-5">
-                <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl ${dept.bg}`}>
-                  <dept.icon className={`h-7 w-7 ${dept.color}`}/>
+                <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl ${bg}`}>
+                  <Icon className={`h-7 w-7 ${color}`}/>
                 </div>
                 <div className="flex-1">
                   <h3 className="text-xl font-bold text-foreground mb-2">{dept.name}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed mb-4">{dept.description}</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">{dept.doctors} Specialist Doctors</span>
+                    <span className="text-xs text-muted-foreground">{dept.doctors?.length || 0} Specialist Doctors</span>
                     <Button variant="outline" size="sm" asChild>
                       <Link to="/appointments">
                         Book Now <ArrowRight className="ml-1 h-3 w-3"/>
@@ -42,7 +64,8 @@ const DepartmentsPage = () => {
                   </div>
                 </div>
               </div>
-            </motion.div>))}
+            </motion.div>
+          )})}
         </div>
       </div>
     </Layout>);
