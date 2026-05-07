@@ -181,9 +181,14 @@ const LoginPage = () => {
 
             {/* Password Field */}
             <div>
-              <label className="text-sm font-medium text-foreground block mb-1.5">
-                Password
-              </label>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="text-sm font-medium text-foreground block">
+                  Password
+                </label>
+                <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
               <Input
                 type="password"
                 placeholder="Enter your password"
