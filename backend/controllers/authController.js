@@ -268,10 +268,14 @@ export const forgotPassword = async (req, res) => {
             pass: process.env.EMAIL_PASS
           }
         });
-        await transporter.sendMail(mailOptions);
-        console.log(`Reset email sent to ${normalizedEmail}`);
+        
+        // Fire and forget to prevent hanging the request
+        transporter.sendMail(mailOptions)
+          .then(() => console.log(`Reset email sent to ${normalizedEmail}`))
+          .catch(err => console.error('Error sending email:', err));
+          
       } catch (err) {
-        console.error('Error sending email:', err);
+        console.error('Error setting up email transporter:', err);
       }
       
       return res.status(200).json({ message: 'If an account exists, a password reset link has been sent.' });
@@ -314,12 +318,14 @@ export const forgotPassword = async (req, res) => {
           pass: process.env.EMAIL_PASS
         }
       });
-      await transporter.sendMail(mailOptions);
-      console.log(`Reset email sent to ${normalizedEmail}`);
+      
+      // Fire and forget to prevent hanging the request
+      transporter.sendMail(mailOptions)
+        .then(() => console.log(`Reset email sent to ${normalizedEmail}`))
+        .catch(err => console.error('Error sending email:', err));
+        
     } catch (err) {
-      console.error('Error sending email:', err);
-      // We don't return an error to the user to prevent email enumeration,
-      // but in a production app you might want to handle this differently.
+      console.error('Error setting up email transporter:', err);
     }
 
     res.status(200).json({ message: 'If an account exists, a password reset link has been sent.' });
