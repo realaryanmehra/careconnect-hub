@@ -1,5 +1,8 @@
 # CareConnect Hub - Hospital Management System
 
+Here you can test the Live Deployment
+https://careconnect-i08uzqkud-realaryanmehras-projects.vercel.app/
+
 ## Quick Start Guide
 
 This is a simple hospital management app with registration and login.
