@@ -12,7 +12,7 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // REGISTER - Mongoose makes it 10 lines!
 export const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, age, bloodGroup, phone } = req.body;
     
     if (!name || !email || !password || password.length < 6) {
       return res.status(400).json({ message: 'Name, email, password (6+ chars)' });
@@ -32,6 +32,9 @@ export const register = async (req, res) => {
         email: normalizedEmail,
         passwordHash,
         role: 'patient',
+        age: parseInt(age) || 0,
+        bloodGroup: bloodGroup || '',
+        phone: phone || '',
         createdAt: new Date()
       };
       globalThis.FALLBACK_DATA.users.push(user);
@@ -48,7 +51,10 @@ export const register = async (req, res) => {
       name,
       email: email.toLowerCase().trim(),
       passwordHash,
-      role: 'patient'
+      role: 'patient',
+      age: parseInt(age) || 0,
+      bloodGroup: bloodGroup || '',
+      phone: phone || ''
     });
 
     res.status(201).json({
@@ -127,6 +133,56 @@ export const getMe = async (req, res) => {
     return res.json({ user: safeUser(user) });
   } catch (error) {
     console.error('Get me error:', error.message);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// UPDATE CURRENT USER PROFILE (protected route)
+export const updateMe = async (req, res) => {
+  try {
+    const { name, age, bloodGroup, phone } = req.body;
+    const userId = req.auth.id;
+
+    if (!globalThis.dbReady) {
+      const userIndex = globalThis.FALLBACK_DATA.users.findIndex((item) => item._id.toString() === userId);
+      if (userIndex === -1) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      if (name) globalThis.FALLBACK_DATA.users[userIndex].name = name;
+      if (age) globalThis.FALLBACK_DATA.users[userIndex].age = parseInt(age);
+      if (bloodGroup) globalThis.FALLBACK_DATA.users[userIndex].bloodGroup = bloodGroup;
+      if (phone) globalThis.FALLBACK_DATA.users[userIndex].phone = phone;
+
+      return res.json({ 
+        message: 'Profile updated', 
+        user: safeUser(globalThis.FALLBACK_DATA.users[userIndex]) 
+      });
+    }
+
+    const updatedUser = await globalThis.User.findByIdAndUpdate(
+      userId,
+      { 
+        $set: { 
+          name, 
+          age: parseInt(age), 
+          bloodGroup, 
+          phone 
+        } 
+      },
+      { new: true, runValidators: true }
+    ).select('-passwordHash');
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    return res.json({ 
+      message: 'Profile updated successfully', 
+      user: safeUser(updatedUser) 
+    });
+  } catch (error) {
+    console.error('Update me error:', error.message);
     return res.status(500).json({ message: 'Server error' });
   }
 };

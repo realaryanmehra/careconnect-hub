@@ -197,3 +197,8 @@ export const removeDoctorFromDepartment = (departmentId, doctorId) => authReques
   method: 'DELETE'
 });
 
+export const updateProfile = (data) => authRequest('/api/auth/me', {
+  method: 'PUT',
+  body: JSON.stringify(data)
+});
+

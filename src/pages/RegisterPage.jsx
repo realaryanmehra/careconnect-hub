@@ -49,6 +49,9 @@ const RegisterPage = () => {
   const [name, setName] = useState("");         // User's full name
   const [email, setEmail] = useState("");        // User's email
   const [password, setPassword] = useState("");  // User's password
+  const [age, setAge] = useState("");           // User's age
+  const [bloodGroup, setBloodGroup] = useState(""); // User's blood group
+  const [phone, setPhone] = useState("");        // User's phone
   const [submitting, setSubmitting] = useState(false); // Loading state
 
   // ============================================
@@ -80,7 +83,7 @@ const RegisterPage = () => {
     try {
       // Call register function from AuthContext
       // This makes API call to create new account
-      await register({ name, email, password });
+      await register({ name, email, password, age, bloodGroup, phone });
       
       // Show success notification
       toast({ title: "Registration successful" });
@@ -189,6 +192,48 @@ const RegisterPage = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 minLength={6} // Minimum 6 characters
                 required // HTML5 validation
+              />
+            </div>
+
+            {/* Age and Blood Group (2 columns) */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-foreground block mb-1.5">
+                  Age
+                </label>
+                <Input
+                  type="number"
+                  placeholder="e.g. 25"
+                  value={age}
+                  onChange={(e) => setAge(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground block mb-1.5">
+                  Blood Group
+                </label>
+                <Input
+                  type="text"
+                  placeholder="e.g. A+"
+                  value={bloodGroup}
+                  onChange={(e) => setBloodGroup(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Phone Number Field */}
+            <div>
+              <label className="text-sm font-medium text-foreground block mb-1.5">
+                Phone Number
+              </label>
+              <Input
+                type="tel"
+                placeholder="e.g. +91 98765 43210"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
               />
             </div>
 

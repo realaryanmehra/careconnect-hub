@@ -8,8 +8,9 @@
 // Import React and hooks
 // ============================================
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
-import { getDashboard } from "@/lib/api";
+import { getDashboard, updateProfile } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // ============================================
@@ -29,7 +30,14 @@ import {
   Thermometer, 
   Droplets, 
   TrendingUp,
-  Video
+  Video,
+  Mail,
+  Phone,
+  User,
+  Zap,
+  Settings,
+  Save,
+  X as CloseIcon
 } from "lucide-react";
 
 // ============================================
@@ -40,6 +48,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 // ============================================
 // Import Layout component
@@ -50,6 +60,7 @@ import Layout from "@/components/Layout";
 // Import Link for navigation
 // ============================================
 import { Link } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 // ============================================
 // MOCK DATA - Sample data for demonstration
@@ -158,6 +169,17 @@ const DashboardPage = () => {
   // Filter state
   const [aptFilter, setAptFilter] = useState("all");
   const [recordSearch, setRecordSearch] = useState("");
+  
+  // Profile edit state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    age: "",
+    bloodGroup: "",
+    phone: ""
+  });
+  const [isUpdating, setIsUpdating] = useState(false);
+  const { toast } = useToast();
 
   // Fetch data on mount
   useEffect(() => {
@@ -175,6 +197,39 @@ const DashboardPage = () => {
     
     loadDashboard();
   }, [isAuthenticated]);
+
+  // Handle profile update
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    setIsUpdating(true);
+    try {
+      const response = await updateProfile(editForm);
+      toast({ title: "Profile updated successfully" });
+      setIsEditModalOpen(false);
+      // Refresh dashboard data
+      const data = await getDashboard();
+      setDashboardData(data);
+    } catch (error) {
+      toast({
+        title: "Update failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Open modal with current data
+  const openEditModal = () => {
+    setEditForm({
+      name: patientInfo.name || "",
+      age: patientInfo.age || "",
+      bloodGroup: patientInfo.bloodGroup || "",
+      phone: patientInfo.phone || ""
+    });
+    setIsEditModalOpen(true);
+  };
 
   if (dashboardData.loading) {
     return (
@@ -260,81 +315,171 @@ const DashboardPage = () => {
         <div className="grid lg:grid-cols-3 gap-6 mb-8">
           
           {/* Patient Information Card */}
-          <div className="bg-card border border-border rounded-xl p-6 shadow-soft">
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            whileHover={{ y: -5 }}
+            className="bg-card border border-border rounded-xl p-6 shadow-soft relative overflow-hidden group"
+          >
+            {/* Background Pattern */}
+            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+              <User className="h-32 w-32 -mr-8 -mt-8 rotate-12" />
+            </div>
+
+            {/* Edit Button */}
+            <div className="absolute top-4 right-4 z-20">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={openEditModal}
+                className="h-8 w-8 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </div>
+
             {/* Avatar and Name */}
-            <div className="flex items-center gap-4 mb-5">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full gradient-primary text-primary-foreground font-extrabold text-xl">
-                {/* Get initials from name */}
-                {patientInfo.name.split(" ").map(n => n[0]).join("")}
+            <div className="flex items-center gap-4 mb-6 relative z-10">
+              <div className="relative">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full gradient-primary text-primary-foreground font-extrabold text-2xl shadow-lg ring-4 ring-primary/10">
+                  {patientInfo.name ? patientInfo.name.split(" ").map(n => n[0]).join("").toUpperCase() : "U"}
+                </div>
+                <div className="absolute -bottom-1 -right-1 bg-success h-4 w-4 rounded-full border-2 border-card" title="Online"></div>
               </div>
               <div>
-                <h3 className="font-bold text-foreground text-lg">{patientInfo.name}</h3>
-                <p className="text-xs text-muted-foreground font-mono">{patientInfo.id}</p>
+                <h3 className="font-bold text-foreground text-xl tracking-tight">{patientInfo.name}</h3>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <Badge variant="secondary" className="text-[10px] py-0 px-2 h-5 font-mono bg-primary/5 text-primary border-primary/10">
+                    {patientInfo.id || 'PT-PENDING'}
+                  </Badge>
+                </div>
               </div>
             </div>
             
             {/* Patient Details */}
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <span className="text-muted-foreground">Age:</span>{" "}
-                <span className="font-medium text-foreground">{patientInfo.age} yrs</span>
+            <div className="space-y-4 relative z-10">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-muted/30 p-3 rounded-lg border border-border/50">
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground block mb-1">Age</span>
+                  <span className="font-bold text-foreground">{patientInfo.age || '--'} yrs</span>
+                </div>
+                <div className="bg-muted/30 p-3 rounded-lg border border-border/50">
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground block mb-1">Blood Type</span>
+                  <span className="font-bold text-destructive flex items-center gap-1">
+                    <Droplets className="h-3 w-3" /> {patientInfo.bloodGroup || '--'}
+                  </span>
+                </div>
               </div>
-              <div>
-                <span className="text-muted-foreground">Blood:</span>{" "}
-                <span className="font-medium text-foreground">{patientInfo.blood}</span>
-              </div>
-              <div className="col-span-2">
-                <span className="text-muted-foreground">Phone:</span>{" "}
-                <span className="font-medium text-foreground">{patientInfo.phone}</span>
-              </div>
-              <div className="col-span-2">
-                <span className="text-muted-foreground">Email:</span>{" "}
-                <span className="font-medium text-foreground">{patientInfo.email}</span>
+
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center gap-3 text-sm group/item">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover/item:bg-primary group-hover/item:text-primary-foreground transition-colors">
+                    <Phone className="h-4 w-4" />
+                  </div>
+                  <span className="text-muted-foreground group-hover/item:text-foreground transition-colors">{patientInfo.phone || 'Not provided'}</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm group/item">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover/item:bg-primary group-hover/item:text-primary-foreground transition-colors">
+                    <Mail className="h-4 w-4" />
+                  </div>
+                  <span className="text-muted-foreground group-hover/item:text-foreground transition-colors truncate">{patientInfo.email || 'Not provided'}</span>
+                </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Vitals Card */}
-          <div className="lg:col-span-2 bg-card border border-border rounded-xl p-6 shadow-soft">
-            <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
-              <Activity className="h-5 w-5 text-primary"/> 
-              Latest Vitals
-            </h3>
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="lg:col-span-2 bg-card border border-border rounded-xl p-6 shadow-soft"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-bold text-foreground flex items-center gap-2">
+                <Activity className="h-5 w-5 text-primary animate-pulse"/> 
+                Latest Vitals
+              </h3>
+              <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-success bg-success/10 px-2.5 py-1 rounded-full">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
+                </span>
+                Live Updates
+              </div>
+            </div>
             
             {/* Vitals Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {vitals.map((v) => (
-                <div key={v.label} className="stat-widget rounded-2xl p-5 text-center flex flex-col items-center justify-center relative overflow-hidden group">
+              {vitals.length > 0 ? vitals.map((v, idx) => (
+                <motion.div 
+                  key={v.label} 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.1 }}
+                  whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                  className="stat-widget rounded-2xl p-5 text-center flex flex-col items-center justify-center relative overflow-hidden group border border-border/50 hover:border-primary/30"
+                >
                   {/* Decorative background glow */}
-                  <div className="absolute -inset-2 bg-gradient-to-tr from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full blur-xl z-0"/>
+                  <div className="absolute -inset-2 bg-gradient-to-tr from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full blur-xl z-0"/>
                   
                   {/* Content (z-10 to stay above glow) */}
                   <div className="relative z-10 flex flex-col items-center w-full">
                     {/* Icon */}
-                    <div className="bg-primary/10 p-2.5 rounded-full mb-3">
-                      <v.icon className="h-5 w-5 text-primary"/>
+                    <div className="bg-primary/10 p-3 rounded-2xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                      <v.icon className={`h-6 w-6 text-primary ${v.label === 'Heart Rate' ? 'animate-[pulse_1s_infinite]' : ''}`}/>
                     </div>
                     
                     {/* Value */}
-                    <div className="text-3xl font-extrabold text-foreground tracking-tighter">{v.value}</div>
-                    
-                    {/* Unit */}
-                    <div className="text-xs text-muted-foreground/70 font-mono mt-0.5">{v.unit}</div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl font-black text-foreground tracking-tighter">{v.value}</span>
+                      <span className="text-[10px] text-muted-foreground/70 font-bold uppercase tracking-tight">{v.unit}</span>
+                    </div>
                     
                     {/* Label */}
-                    <div className="text-sm font-medium text-foreground mt-2">{v.label}</div>
+                    <div className="text-xs font-bold text-muted-foreground mt-2 uppercase tracking-widest">{v.label}</div>
                     
-                    {/* Trend indicator (if elevated) */}
+                    {/* Sparkline Visual (Simple SVG) */}
+                    <div className="w-full h-8 mt-4 overflow-hidden opacity-30 group-hover:opacity-60 transition-opacity">
+                      <svg className="w-full h-full" viewBox="0 0 100 40" preserveAspectRatio="none">
+                        <path
+                          d={`M0 30 Q 10 ${Math.random() * 30} 20 25 T 40 ${Math.random() * 30} T 60 20 T 80 ${Math.random() * 30} T 100 25`}
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="text-primary"
+                        />
+                      </svg>
+                    </div>
+
+                    {/* Trend indicator */}
                     {v.trend === "up" && (
-                      <div className="flex items-center gap-1 mt-2 text-[10px] uppercase font-bold text-warning bg-warning/10 px-2 py-0.5 rounded-full">
-                        <TrendingUp className="h-3 w-3"/> Elevated
+                      <div className="absolute top-2 right-2 flex items-center gap-1 text-[8px] uppercase font-bold text-warning bg-warning/10 px-1.5 py-0.5 rounded-full">
+                        <TrendingUp className="h-2 w-2"/> High
                       </div>
                     )}
                   </div>
+                </motion.div>
+              )) : (
+                <div className="col-span-full py-12 flex flex-col items-center justify-center text-center">
+                  <div className="relative mb-4">
+                    <Activity className="h-16 w-16 text-muted/30" />
+                    <motion.div 
+                      animate={{ 
+                        pathLength: [0, 1, 0],
+                        opacity: [0.3, 0.6, 0.3]
+                      }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="absolute inset-0 flex items-center justify-center"
+                    >
+                      <Zap className="h-8 w-8 text-primary/40" />
+                    </motion.div>
+                  </div>
+                  <h4 className="text-muted-foreground font-medium">No Vitals Recorded Today</h4>
+                  <p className="text-xs text-muted-foreground/60 max-w-xs mt-1">Your latest medical measurements will appear here after your checkup.</p>
                 </div>
-              ))}
+              )}
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* ============================================ */}
@@ -611,6 +756,67 @@ const DashboardPage = () => {
           </TabsContent>
           
         </Tabs>
+        
+        {/* Edit Profile Modal */}
+        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit Profile</DialogTitle>
+              <DialogDescription>
+                Update your personal information below. Click save when you're done.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleUpdateProfile} className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Full Name</Label>
+                <Input 
+                  id="edit-name" 
+                  value={editForm.name} 
+                  onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-age">Age (yrs)</Label>
+                  <Input 
+                    id="edit-age" 
+                    type="number"
+                    value={editForm.age} 
+                    onChange={(e) => setEditForm({...editForm, age: e.target.value})}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-blood">Blood Group</Label>
+                  <Input 
+                    id="edit-blood" 
+                    value={editForm.bloodGroup} 
+                    onChange={(e) => setEditForm({...editForm, bloodGroup: e.target.value})}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-phone">Phone Number</Label>
+                <Input 
+                  id="edit-phone" 
+                  value={editForm.phone} 
+                  onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
+                  required
+                />
+              </div>
+              <DialogFooter className="pt-4">
+                <Button type="button" variant="outline" onClick={() => setIsEditModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isUpdating}>
+                  {isUpdating ? "Saving..." : <><Save className="h-4 w-4 mr-2" /> Save Changes</>}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );

@@ -49,8 +49,12 @@ export const getDashboard = async (req, res) => {
 
     res.json({
       patientInfo: { 
+        id: user?._id?.toString() || 'PENDING',
         name: user?.name || 'Patient', 
         email: user?.email || '',
+        phone: user?.phone || 'Not provided',
+        age: user?.age || '--',
+        bloodGroup: user?.bloodGroup || '--',
         role: user?.role || 'patient'
       },
       activeTokens,

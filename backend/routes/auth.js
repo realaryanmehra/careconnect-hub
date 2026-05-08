@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import authMiddleware from '../middleware/auth.js';
-import { register, login, getMe, googleAuth, forgotPassword, resetPassword } from '../controllers/authController.js';
+import { register, login, getMe, updateMe, googleAuth, forgotPassword, resetPassword } from '../controllers/authController.js';
 
 const router = Router();
 
@@ -21,6 +21,9 @@ router.post('/reset-password/:token', resetPassword);
 
 // GET /me - protected
 router.get('/me', authMiddleware, getMe);
+
+// PUT /me - protected
+router.put('/me', authMiddleware, updateMe);
 
 export default router;
 

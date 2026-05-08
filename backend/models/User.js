@@ -5,6 +5,9 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true },
   passwordHash: { type: String, required: true },
   role: { type: String, default: 'patient', enum: ['patient', 'admin'] },
+  age: { type: Number },
+  bloodGroup: { type: String },
+  phone: { type: String },
   createdAt: { type: Date, default: Date.now },
   resetPasswordToken: String,
   resetPasswordExpires: Date
