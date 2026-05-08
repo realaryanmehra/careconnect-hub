@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Calendar, Clock, Users, Heart, Brain, Bone, Baby, Eye, Stethoscope, ArrowRight, Shield, Award } from "lucide-react";
+import { Calendar, Clock, Users, Heart, Brain, Bone, Baby, Eye, Stethoscope, ArrowRight, Shield, Award, Activity, Database, Smartphone, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
 import heroImage from "@/assets/hero-hospital.jpg";
@@ -22,36 +22,156 @@ const fadeUp = {
     hidden: { opacity: 0, y: 20 },
     visible: (i) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, duration: 0.5 } }),
 };
+
+const HeroAnimation = () => {
+  return (
+    <div className="relative w-full h-full flex items-center justify-center">
+      {/* Central Pulse Effect */}
+      <div className="relative">
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.6, 0.3],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          className="absolute inset-0 bg-primary/30 rounded-full blur-3xl"
+        />
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 1, ease: "easeOut" }}
+          className="relative z-10 bg-card/80 dark:bg-white/10 backdrop-blur-xl border border-border dark:border-white/20 p-8 rounded-full shadow-lg dark:shadow-2xl"
+        >
+          <Activity className="h-20 w-20 text-primary animate-pulse" />
+        </motion.div>
+      </div>
+
+      {/* Floating Cards */}
+      <FloatingCard
+        icon={Users}
+        title="Active Doctors"
+        value="48"
+        delay={0}
+        position="top-10 left-10"
+      />
+      <FloatingCard
+        icon={Calendar}
+        title="Appointments"
+        value="1.2k"
+        delay={1.5}
+        position="bottom-20 left-20"
+      />
+      <FloatingCard
+        icon={Zap}
+        title="Response Time"
+        value="0.8s"
+        delay={0.8}
+        position="top-20 right-10"
+      />
+      <FloatingCard
+        icon={Database}
+        title="Secure Records"
+        value="100%"
+        delay={2.2}
+        position="bottom-10 right-20"
+      />
+
+      {/* Connecting Lines (Decorative) */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20">
+        <motion.path
+          d="M 100 100 Q 250 50 400 100"
+          stroke="currentColor"
+          strokeWidth="1"
+          fill="none"
+          className="text-primary"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 3, repeat: Infinity }}
+        />
+        <motion.path
+          d="M 400 400 Q 250 450 100 400"
+          stroke="currentColor"
+          strokeWidth="1"
+          fill="none"
+          className="text-primary"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 3, repeat: Infinity, delay: 1.5 }}
+        />
+      </svg>
+    </div>
+  );
+};
+
+const FloatingCard = ({ icon: Icon, title, value, delay, position }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ 
+      opacity: 1, 
+      y: [0, -15, 0],
+    }}
+    transition={{
+      opacity: { duration: 1, delay },
+      y: {
+        duration: 4,
+        repeat: Infinity,
+        ease: "easeInOut",
+        delay,
+      }
+    }}
+    whileHover={{ scale: 1.05, zIndex: 50 }}
+    className={`absolute ${position} bg-card/80 dark:bg-white/10 backdrop-blur-xl border border-border dark:border-white/20 p-4 rounded-2xl flex items-center gap-4 min-w-[180px] cursor-pointer shadow-lg dark:shadow-2xl`}
+  >
+    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+      <Icon className="h-5 w-5" />
+    </div>
+    <div>
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground dark:text-white/50 font-bold">{title}</div>
+      <div className="text-lg font-bold text-foreground dark:text-white">{value}</div>
+    </div>
+  </motion.div>
+);
 const Index = () => {
     return (<Layout>
       {/* Hero */}
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-hidden min-h-[60vh] flex items-start">
         <div className="absolute inset-0">
           <img src={heroImage} alt="Modern hospital facility" className="w-full h-full object-cover"/>
           <div className="absolute inset-0 bg-slate-900/60 dark:bg-black/80"/>
         </div>
-        <div className="relative container py-24 md:py-36">
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }} className="max-w-2xl space-y-6">
-            <span className="inline-flex items-center gap-2 rounded-full bg-primary/20 px-4 py-1.5 text-sm font-medium text-white backdrop-blur-sm">
-              <Shield className="h-4 w-4"/> Trusted Healthcare Partner
-            </span>
-            <h1 className="text-4xl md:text-6xl font-extrabold text-white leading-tight">
-              Your Health, <br />Our <span className="text-primary">Priority</span>
-            </h1>
-            <p className="text-lg text-white/80 max-w-lg">
-              Experience seamless hospital management with smart token queuing, instant appointment booking, and world-class medical care.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Button size="lg" className="shadow-primary" asChild>
-                <Link to="/appointments">
-                  Book Appointment <ArrowRight className="ml-2 h-4 w-4"/>
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-md" asChild>
-                <Link to="/tokens">Check Token Status</Link>
-              </Button>
+        <div className="relative container pt-8 pb-12 md:pt-12 md:pb-16">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }} className="space-y-6">
+              <span className="inline-flex items-center gap-2 rounded-full bg-primary/20 px-4 py-1.5 text-sm font-medium text-white backdrop-blur-sm border border-white/10">
+                <Shield className="h-4 w-4 text-primary"/> Trusted Healthcare Partner
+              </span>
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight">
+                Your Health, <br />Our <span className="text-primary">Priority</span>
+              </h1>
+              <p className="text-lg md:text-xl text-white/80 max-w-lg leading-relaxed">
+                Experience seamless hospital management with smart token queuing, instant appointment booking, and world-class medical care.
+              </p>
+              <div className="flex flex-wrap gap-4 pt-4">
+                <Button size="lg" className="shadow-primary h-12 px-8 text-base" asChild>
+                  <Link to="/appointments">
+                    Book Appointment <ArrowRight className="ml-2 h-4 w-4"/>
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-md h-12 px-8 text-base" asChild>
+                  <Link to="/tokens">Check Token Status</Link>
+                </Button>
+              </div>
+            </motion.div>
+
+            {/* Interactive Hero Animation */}
+            <div className="hidden lg:block relative h-[500px]">
+              <HeroAnimation />
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
