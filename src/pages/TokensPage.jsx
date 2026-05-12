@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Layout from "@/components/Layout";
 import { useToast } from "@/hooks/use-toast";
 import VideoCallModal from "@/components/VideoCallModal";
+import SplitText from "@/components/SplitText";
 import { Video } from "lucide-react";
 
 // We will fetch departments from API dynamically now.
@@ -119,7 +120,10 @@ const TokensPage = () => {
     return (<Layout>
       <div className="container py-10">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="text-3xl md:text-4xl font-extrabold text-foreground mb-2">Token <span className="text-primary">Management</span></h1>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-foreground mb-2">
+            <SplitText text="Token " triggerOnView={false} />
+            <span className="text-primary"><SplitText text="Management" triggerOnView={false} delay={0.2} /></span>
+          </h1>
           <p className="text-muted-foreground mb-8">Generate and track patient queue tokens in real time.</p>
         </motion.div>
 

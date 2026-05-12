@@ -26,6 +26,7 @@ import { Users, Calendar, Activity, Settings, Search, Filter, Ticket, X, Video }
 import VideoCallModal from '@/components/VideoCallModal';
 import { socket } from '@/lib/socket';
 import AdminDepartmentsTab from '@/components/AdminDepartmentsTab';
+import SplitText from '@/components/SplitText';
 
 const AdminDashboard = () => {
   const { isAdmin } = useAuth();
@@ -249,7 +250,10 @@ const AdminDashboard = () => {
       <div className="container py-10 space-y-8">
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-4xl font-bold">Admin Dashboard</h1>
+          <h1 className="text-4xl font-bold">
+            <SplitText text="Admin " triggerOnView={false} />
+            <span className="text-primary"><SplitText text="Dashboard" triggerOnView={false} delay={0.2} /></span>
+          </h1>
           <p className="text-muted-foreground">Manage hospital services, staff, patients, and appointments</p>
         </div>
 

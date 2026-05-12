@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 import { getDepartments, createDepartment, updateDepartment, deleteDepartment, addDoctorToDepartment, removeDoctorFromDepartment } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -21,6 +23,19 @@ const AdminDepartmentsTab = () => {
   const [newDoctor, setNewDoctor] = useState({ name: '', email: '', speciality: '' });
   const [activeDeptId, setActiveDeptId] = useState(null);
   const [isDoctorModalOpen, setIsDoctorModalOpen] = useState(false);
+  const container = useRef();
+
+  useGSAP(() => {
+    if (!loading && departments.length > 0) {
+      gsap.from(".dept-card", {
+        y: 30,
+        opacity: 0,
+        stagger: 0.1,
+        duration: 0.8,
+        ease: "power3.out",
+      });
+    }
+  }, [loading, departments]);
 
   useEffect(() => {
     fetchDepartments();
@@ -92,7 +107,7 @@ const AdminDepartmentsTab = () => {
   if (loading) return <div className="py-10 text-center"><Loader2 className="animate-spin w-8 h-8 mx-auto text-primary" /></div>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" ref={container}>
       {/* Create New Department */}
       <Card>
         <CardHeader>
@@ -120,7 +135,8 @@ const AdminDepartmentsTab = () => {
       {/* Departments List */}
       <div className="grid grid-cols-1 gap-6">
         {departments.map(dept => (
-          <Card key={dept._id || dept.id}>
+          <div key={dept._id || dept.id} className="dept-card">
+            <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div>
                 <CardTitle className="text-xl flex items-center gap-2">
@@ -182,7 +198,8 @@ const AdminDepartmentsTab = () => {
                 </div>
               )}
             </CardContent>
-          </Card>
+            </Card>
+          </div>
         ))}
         {departments.length === 0 && (
           <div className="py-12 text-center text-muted-foreground">

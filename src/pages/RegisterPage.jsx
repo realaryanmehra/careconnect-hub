@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 // Import Layout component (page wrapper)
 // ============================================
 import Layout from "@/components/Layout";
+import SplitText from "@/components/SplitText";
 
 // ============================================
 // Import auth functions
@@ -141,7 +142,9 @@ const RegisterPage = () => {
         <div className="max-w-md mx-auto bg-card border border-border rounded-2xl p-8 shadow-medium">
           
           {/* Page Title */}
-          <h1 className="text-3xl font-extrabold text-foreground">Create Account</h1>
+          <h1 className="text-3xl font-extrabold text-foreground">
+            <SplitText text="Create Account" triggerOnView={false} />
+          </h1>
           <p className="text-sm text-muted-foreground mt-2">
             Register to book appointments and manage your care.
           </p>

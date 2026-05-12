@@ -1,5 +1,9 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { useRef } from "react";
+import SplitText from "@/components/SplitText";
 import { Calendar, Clock, Users, Heart, Brain, Bone, Baby, Eye, Stethoscope, ArrowRight, Shield, Award, Activity, Database, Smartphone, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
@@ -136,7 +140,29 @@ const FloatingCard = ({ icon: Icon, title, value, delay, position }) => (
   </motion.div>
 );
 const Index = () => {
+    const container = useRef();
+
+    useGSAP(() => {
+      const tl = gsap.timeline();
+      
+      // Removed .char animation from here as SplitText component handles it
+      
+      tl.from(".hero-description", {
+        opacity: 0,
+        y: 20,
+        duration: 0.6
+      }, "+=0.2");
+
+      tl.from(".hero-buttons", {
+        opacity: 0,
+        y: 20,
+        stagger: 0.1,
+        duration: 0.6
+      }, "-=0.4");
+    }, { scope: container });
+
     return (<Layout>
+      <div ref={container}>
       {/* Hero */}
       <section className="relative overflow-hidden min-h-[60vh] flex items-start">
         <div className="absolute inset-0">
@@ -149,13 +175,21 @@ const Index = () => {
               <span className="inline-flex items-center gap-2 rounded-full bg-primary/20 px-4 py-1.5 text-sm font-medium text-white backdrop-blur-sm border border-white/10">
                 <Shield className="h-4 w-4 text-primary"/> Trusted Healthcare Partner
               </span>
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight">
-                Your Health, <br />Our <span className="text-primary">Priority</span>
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight overflow-hidden">
+                <div className="title-line block">
+                  <SplitText text="Your Health," triggerOnView={false} delay={0.5} />
+                </div>
+                <div className="title-line block">
+                  <SplitText text="Our " triggerOnView={false} delay={0.8} />
+                  <span className="text-primary">
+                    <SplitText text="Priority" triggerOnView={false} delay={1.1} />
+                  </span>
+                </div>
               </h1>
-              <p className="text-lg md:text-xl text-white/80 max-w-lg leading-relaxed">
+              <p className="text-lg md:text-xl text-white/80 max-w-lg leading-relaxed hero-description">
                 Experience seamless hospital management with smart token queuing, instant appointment booking, and world-class medical care.
               </p>
-              <div className="flex flex-wrap gap-4 pt-4">
+              <div className="flex flex-wrap gap-4 pt-4 hero-buttons">
                 <Button size="lg" className="shadow-primary h-12 px-8 text-base" asChild>
                   <Link to="/appointments">
                     Book Appointment <ArrowRight className="ml-2 h-4 w-4"/>
@@ -190,7 +224,10 @@ const Index = () => {
       {/* Features */}
       <section className="container py-20">
         <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-foreground">Why Choose <span className="text-primary">MediCare</span></h2>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-foreground">
+            <SplitText text="Why Choose " />
+            <span className="text-primary"><SplitText text="MediCare" delay={0.3} /></span>
+          </h2>
           <p className="text-muted-foreground mt-3 max-w-md mx-auto">Smart hospital management designed for patients and professionals alike.</p>
         </motion.div>
         <div className="grid md:grid-cols-3 gap-6">
@@ -212,7 +249,10 @@ const Index = () => {
       <section className="gradient-hero py-20">
         <div className="container">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-foreground">Our <span className="text-primary">Departments</span></h2>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-foreground">
+              <SplitText text="Our " />
+              <span className="text-primary"><SplitText text="Departments" delay={0.2} /></span>
+            </h2>
             <p className="text-muted-foreground mt-3">Specialized care across multiple disciplines.</p>
           </motion.div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -229,7 +269,9 @@ const Index = () => {
       <section className="container py-20">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} className="gradient-primary rounded-2xl p-10 md:p-16 text-center text-primary-foreground">
           <Award className="h-12 w-12 mx-auto mb-4 opacity-80"/>
-          <h2 className="text-3xl md:text-4xl font-extrabold mb-4">Ready to Experience Better Healthcare?</h2>
+          <h2 className="text-3xl md:text-4xl font-extrabold mb-4">
+            <SplitText text="Ready to Experience Better Healthcare?" />
+          </h2>
           <p className="text-primary-foreground/80 max-w-md mx-auto mb-8">
             Book your appointment today and skip the waiting line with our smart token system.
           </p>
@@ -243,6 +285,7 @@ const Index = () => {
           </div>
         </motion.div>
       </section>
+      </div>
     </Layout>);
 };
 export default Index;

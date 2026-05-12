@@ -32,6 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 // Import Layout component (page wrapper)
 // ============================================
 import Layout from "@/components/Layout";
+import SplitText from "@/components/SplitText";
 
 // ============================================
 // Import auth functions
@@ -156,7 +157,9 @@ const LoginPage = () => {
         <div className="max-w-md mx-auto bg-card border border-border rounded-2xl p-8 shadow-medium">
           
           {/* Page Title */}
-          <h1 className="text-3xl font-extrabold text-foreground">Login</h1>
+          <h1 className="text-3xl font-extrabold text-foreground">
+            <SplitText text="Login" triggerOnView={false} />
+          </h1>
           <p className="text-sm text-muted-foreground mt-2">
             Access your patient dashboard and appointments.
           </p>

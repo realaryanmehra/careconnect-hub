@@ -55,6 +55,7 @@ import { Label } from "@/components/ui/label";
 // Import Layout component
 // ============================================
 import Layout from "@/components/Layout";
+import SplitText from "@/components/SplitText";
 
 // ============================================
 // Import Link for navigation
@@ -290,7 +291,8 @@ const DashboardPage = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-3xl md:text-4xl font-extrabold text-foreground">
-                Patient <span className="text-primary">Dashboard</span>
+                <SplitText text="Patient " triggerOnView={false} />
+                <span className="text-primary"><SplitText text="Dashboard" triggerOnView={false} delay={0.2} /></span>
               </h1>
               <p className="text-muted-foreground mt-1">
                 Welcome back, {patientInfo.name || 'Patient'}

@@ -3,6 +3,7 @@ import { Heart, Brain, Bone, Baby, Eye, Stethoscope, ArrowRight } from "lucide-r
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
+import SplitText from "@/components/SplitText";
 import { useState, useEffect } from "react";
 import * as Icons from "lucide-react";
 import { getDepartments } from "@/lib/api";
@@ -34,7 +35,10 @@ const DepartmentsPage = () => {
     return (<Layout>
       <div className="container py-10">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="text-3xl md:text-4xl font-extrabold text-foreground mb-2">Our <span className="text-primary">Departments</span></h1>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-foreground mb-2">
+            <SplitText text="Our " triggerOnView={false} />
+            <span className="text-primary"><SplitText text="Departments" triggerOnView={false} delay={0.2} /></span>
+          </h1>
           <p className="text-muted-foreground mb-10">World-class care across every specialty.</p>
         </motion.div>
 

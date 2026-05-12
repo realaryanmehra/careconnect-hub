@@ -20,6 +20,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 import AdminDashboard from "./pages/AdminDashboard";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import SmoothScroll from "./components/SmoothScroll";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID_HERE";
 
@@ -37,33 +38,35 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-              <Route path="/tokens" element={
-                <ProtectedRoute><TokensPage /></ProtectedRoute>
-              } />
-              <Route path="/departments" element={
-                <ProtectedRoute><DepartmentsPage /></ProtectedRoute>
-              } />
-              <Route path="/appointments" element={
-                <ProtectedRoute><AppointmentsPage /></ProtectedRoute>
-              } />
-<Route path="/dashboard" element={
-                <ProtectedRoute><DashboardPage /></ProtectedRoute>
-              } />
-              <Route path="/admin" element={
-                <ProtectedRoute>
-                  <AdminRoute>
-                    <AdminDashboard />
-                  </AdminRoute>
-                </ProtectedRoute>
-              } />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <SmoothScroll>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+                <Route path="/tokens" element={
+                  <ProtectedRoute><TokensPage /></ProtectedRoute>
+                } />
+                <Route path="/departments" element={
+                  <ProtectedRoute><DepartmentsPage /></ProtectedRoute>
+                } />
+                <Route path="/appointments" element={
+                  <ProtectedRoute><AppointmentsPage /></ProtectedRoute>
+                } />
+                <Route path="/dashboard" element={
+                  <ProtectedRoute><DashboardPage /></ProtectedRoute>
+                } />
+                <Route path="/admin" element={
+                  <ProtectedRoute>
+                    <AdminRoute>
+                      <AdminDashboard />
+                    </AdminRoute>
+                  </ProtectedRoute>
+                } />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </SmoothScroll>
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>

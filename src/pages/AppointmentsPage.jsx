@@ -23,6 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import Layout from "@/components/Layout";
 import { useToast } from "@/hooks/use-toast";
+import SplitText from "@/components/SplitText";
 import { bookAppointment, getDepartments } from '@/lib/api.js';
 
 // ============================================
@@ -305,7 +306,8 @@ const AppointmentsPage = () => {
             {/* Page Header */}
             <div className="container">
               <h1 className="text-3xl md:text-4xl font-extrabold text-foreground mb-2">
-                Book <span className="text-primary">Appointment</span>
+                <SplitText text="Book " triggerOnView={false} />
+                <span className="text-primary"><SplitText text="Appointment" triggerOnView={false} delay={0.2} /></span>
               </h1>
               <p className="text-muted-foreground mb-8">
                 Schedule your visit in just a few steps.
