@@ -7,10 +7,13 @@
 // ============================================
 // Import React Router components
 // ============================================
+import { useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 
 // Import auth context to check login status
 import { useAuth } from "@/contexts/AuthContext";
+// Import toast hook
+import { useToast } from "@/hooks/use-toast";
 
 // ============================================
 // ProtectedRoute Component
@@ -25,6 +28,7 @@ const ProtectedRoute = ({ children }) => {
   // isAuthenticated: true if user is logged in, false if not
   // loading: true if still checking saved login status
   const { isAuthenticated, loading } = useAuth();
+  const { toast } = useToast();
 
   // ============================================
   // Get current location (URL)
@@ -32,6 +36,19 @@ const ProtectedRoute = ({ children }) => {
   // This helps us redirect user back to the page they tried
   // to access after they login successfully
   const location = useLocation();
+
+  // ============================================
+  // Step 0: Show toast message if not authenticated
+  // ============================================
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      toast({
+        title: "Login Required",
+        description: "Please login to access this section.",
+        variant: "destructive",
+      });
+    }
+  }, [loading, isAuthenticated, toast]);
 
   // ============================================
   // Step 1: Show nothing while loading

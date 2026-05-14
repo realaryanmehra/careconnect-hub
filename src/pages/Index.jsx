@@ -256,11 +256,15 @@ const Index = () => {
             <p className="text-muted-foreground mt-3">Specialized care across multiple disciplines.</p>
           </motion.div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {departments.map((dept, i) => (<motion.div key={dept.name} custom={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="bg-card border border-border rounded-xl p-6 hover:shadow-medium transition-all cursor-pointer group">
-                <dept.icon className={`h-8 w-8 ${dept.color} mb-3`}/>
-                <h3 className="font-bold text-foreground">{dept.name}</h3>
-                <p className="text-xs text-muted-foreground mt-1">{dept.description}</p>
-              </motion.div>))}
+            {departments.map((dept, i) => (
+              <Link key={dept.name} to="/departments">
+                <motion.div custom={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="bg-card border border-border rounded-xl p-6 hover:shadow-medium transition-all cursor-pointer group h-full">
+                  <dept.icon className={`h-8 w-8 ${dept.color} mb-3`}/>
+                  <h3 className="font-bold text-foreground">{dept.name}</h3>
+                  <p className="text-xs text-muted-foreground mt-1">{dept.description}</p>
+                </motion.div>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
