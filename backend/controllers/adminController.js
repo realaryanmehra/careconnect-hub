@@ -82,22 +82,39 @@ export const getAllTokens = async (req, res) => {
   try {
     ensureDB();
     
-    const tokens = await globalThis.Token.find({}).sort({ createdAt: -1 });
-    
-    const simpleTokens = tokens.map(token => ({
-      id: token._id.toString(),
-      number: token.number,
-      patientName: token.patientName,
-      department: token.department,
-      position: token.position,
-      status: token.status || 'waiting',
-      estimatedTime: token.estimatedTime || null,
-      userId: token.userId?.toString() || null,
-      createdAt: token.createdAt,
-      updatedAt: token.updatedAt
+    // Step 1: Fetch all tokens sorted by number
+    const tokens = await globalThis.Token.find({}).sort({ number: 1 });
+
+    // Step 2: Map to response format with dynamic position
+    const tokensWithDetails = await Promise.all(tokens.map(async (token) => {
+      let position = 0;
+      let estTime = 'N/A';
+
+      if (token.status === 'waiting') {
+        const aheadCount = await globalThis.Token.countDocuments({
+          department: token.department,
+          status: 'waiting',
+          createdAt: { $lt: token.createdAt }
+        });
+        position = aheadCount + 1;
+        estTime = `~${(aheadCount + 1) * 15} minutes`;
+      }
+
+      return {
+        id: token._id.toString(),
+        number: token.number,
+        patientName: token.patientName,
+        department: token.department,
+        position: position,
+        status: token.status || 'waiting',
+        paymentStatus: token.paymentStatus || 'pending',
+        estimatedTime: estTime,
+        userId: token.userId?.toString() || null,
+        createdAt: token.createdAt,
+      };
     }));
-    
-    res.json({ tokens: simpleTokens });
+
+    res.json({ tokens: tokensWithDetails });
   } catch (error) {
     console.error('Admin tokens error:', error);
     res.status(500).json({ message: 'Server error' });

@@ -17,7 +17,26 @@ export const getTokens = async (req, res) => {
     // Step 1: Mongoose query
     const tokens = await globalThis.Token.find({ userId: req.auth.id }).sort({ createdAt: -1 });
     
-    // Step 2: Calculate simple stats
+    // Step 2: Dynamically calculate position for each waiting token
+    const tokensWithPosition = await Promise.all(tokens.map(async (t) => {
+      const tokenObj = t.toObject ? t.toObject() : t;
+      if (tokenObj.status === 'waiting') {
+        // Count how many people are waiting in the same department who joined BEFORE this token
+        const aheadCount = await globalThis.Token.countDocuments({
+          department: tokenObj.department,
+          status: 'waiting',
+          createdAt: { $lt: tokenObj.createdAt }
+        });
+        tokenObj.position = aheadCount + 1;
+        tokenObj.estimatedTime = `~${(aheadCount + 1) * 15} minutes`;
+      } else {
+        tokenObj.position = 0;
+        tokenObj.estimatedTime = 'N/A';
+      }
+      return tokenObj;
+    }));
+
+    // Step 3: Calculate simple stats
     const stats = {
       total: tokens.length,
       waiting: tokens.filter(t => t.status === 'waiting').length,
@@ -27,7 +46,7 @@ export const getTokens = async (req, res) => {
 
     console.log('Tokens fetched:', stats.total);
     
-    res.json({ tokens, stats });
+    res.json({ tokens: tokensWithPosition, stats });
   } catch (error) {
     console.error('Get tokens error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -49,19 +68,25 @@ export const generateToken = async (req, res) => {
 
     ensureDB();
 
-    // Step 1: Get user's current tokens to calculate number
-    const existingTokens = await globalThis.tokensCollection.find({ userId: new mongoose.Types.ObjectId(req.auth.id) }).toArray();
-    const waitingTokens = existingTokens.filter(t => t.status === 'waiting').length;
+    // Step 1: Get global token count to determine the next unique number
+    const globalTokenCount = await globalThis.Token.countDocuments({});
     
-    // Step 2: Create new token data
+    // Step 2: Get waiting tokens for THIS department to calculate position
+    const waitingInDept = await globalThis.Token.countDocuments({ 
+      department, 
+      status: 'waiting' 
+    });
+    
+    // Step 3: Create new token data
     const newToken = {
       _id: new mongoose.Types.ObjectId(),
-      number: existingTokens.length + 1,
+      number: globalTokenCount + 1, // Global sequence
       patientName: patientName.trim(),
       department,
       status: 'waiting',
-      position: waitingTokens,
-      estimatedTime: `~${(waitingTokens + 1) * 15} minutes`,
+      paymentStatus: 'pending',
+      position: waitingInDept + 1,
+      estimatedTime: `~${(waitingInDept + 1) * 15} minutes`,
       userId: new mongoose.Types.ObjectId(req.auth.id),
       createdAt: new Date()
     };

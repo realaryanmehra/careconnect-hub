@@ -12,8 +12,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Layout from "@/components/Layout";
 import { useToast } from "@/hooks/use-toast";
 import VideoCallModal from "@/components/VideoCallModal";
+import PaymentModal from "@/components/PaymentModal";
 import SplitText from "@/components/SplitText";
-import { Video } from "lucide-react";
+import { Video, CreditCard } from "lucide-react";
 
 // We will fetch departments from API dynamically now.
 // const departments = ["Cardiology", "Neurology", "Orthopedics", "Pediatrics", "Ophthalmology", "General Medicine"];
@@ -31,12 +32,25 @@ const TokensPage = () => {
     const [searchToken, setSearchToken] = useState("");
     const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
     const [videoCallRoom, setVideoCallRoom] = useState(null);
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+    const [selectedTokenForPayment, setSelectedTokenForPayment] = useState(null);
     const { toast } = useToast();
     const [departments, setDepartments] = useState([]);
 
     const handleJoinVideoCall = (tokenId) => {
         setVideoCallRoom(tokenId);
         setIsVideoModalOpen(true);
+    };
+
+    const handleOpenPayment = (token) => {
+        setSelectedTokenForPayment(token);
+        setIsPaymentModalOpen(true);
+    };
+
+    const handlePaymentSuccess = (tokenId) => {
+        setTokens(prev => prev.map(t => 
+            (t._id === tokenId || t.id === tokenId) ? { ...t, paymentStatus: 'paid' } : t
+        ));
     };
 
     // Fetch tokens
@@ -70,7 +84,9 @@ const TokensPage = () => {
         const onTokenUpdated = (data) => {
             console.log("🔄 Token update received via socket:", data);
             setTokens(prev => prev.map(t => 
-                (t._id === data.id || t.id === data.id) ? { ...t, status: data.status } : t
+                (t._id === data.id || t.id === data.id) 
+                    ? { ...t, status: data.status || t.status, paymentStatus: data.paymentStatus || t.paymentStatus } 
+                    : t
             ));
         };
 
@@ -230,11 +246,50 @@ const TokensPage = () => {
                         <sc.icon className={`h-3 w-3 mr-1 ${token.status === "in-progress" ? "animate-spin" : ""}`}/>
                         {sc.label}
                       </Badge>
-                      {token.status === "in-progress" && (
-                        <Button variant="outline" size="sm" onClick={() => handleJoinVideoCall(token.id || token._id)} className="h-8 gap-1 border-primary/20 text-primary hover:bg-primary hover:text-white">
-                            <Video className="h-4 w-4" /> Join
-                        </Button>
-                      )}
+                      
+                      {/* Payment Status Badge */}
+                      <Badge variant={token.paymentStatus === "paid" ? "success" : "warning"} className="gap-1">
+                        {token.paymentStatus === "paid" ? <CheckCircle className="h-3 w-3" /> : <CreditCard className="h-3 w-3" />}
+                        {token.paymentStatus === "paid" ? "Paid" : "Unpaid"}
+                      </Badge>
+
+                      <div className="flex gap-2">
+                        {/* Show Pay Now button if unpaid */}
+                        {token.paymentStatus !== "paid" && (
+                          <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            onClick={() => handleOpenPayment(token)}
+                            className="h-8 gap-1 bg-amber-100 text-amber-700 hover:bg-amber-200 border-amber-200"
+                          >
+                            <CreditCard className="h-4 w-4" /> Pay Now
+                          </Button>
+                        )}
+
+                        {/* Show Join button ONLY if in-progress AND paid */}
+                        {token.status === "in-progress" && (
+                          token.paymentStatus === "paid" ? (
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleJoinVideoCall(token.id || token._id)} 
+                              className="h-8 gap-1 border-primary/20 text-primary hover:bg-primary hover:text-white"
+                            >
+                                <Video className="h-4 w-4" /> Join
+                            </Button>
+                          ) : (
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              disabled
+                              className="h-8 gap-1 opacity-50 cursor-not-allowed"
+                              title="Pay consultation fee to join"
+                            >
+                                <Video className="h-4 w-4" /> Locked
+                            </Button>
+                          )
+                        )}
+                      </div>
                     </div>
                   </motion.div>);
         })}
@@ -247,6 +302,12 @@ const TokensPage = () => {
         onClose={() => setIsVideoModalOpen(false)} 
         roomId={videoCallRoom} 
         socket={socket} 
+      />
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        token={selectedTokenForPayment}
+        onSuccess={handlePaymentSuccess}
       />
     </Layout>);
 };

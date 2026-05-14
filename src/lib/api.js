@@ -202,3 +202,8 @@ export const updateProfile = (data) => authRequest('/api/auth/me', {
   body: JSON.stringify(data)
 });
 
+export const processDemoPayment = (tokenId) => authRequest('/api/payments/demo-pay', {
+  method: 'POST',
+  body: JSON.stringify({ tokenId })
+});
+

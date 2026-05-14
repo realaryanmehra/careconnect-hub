@@ -58,9 +58,25 @@ const AdminDashboard = () => {
     if (!isAdmin) return;
     fetchData();
     
-    // Auto-refresh every 30 seconds
+    // 1. Listen for real-time token updates (e.g. status or payment changes)
+    const onTokenUpdated = (data) => {
+      console.log("⚡ Admin: Token update received:", data);
+      setTokens(prev => prev.map(t => 
+        (t.id === data.id || t._id === data.id) 
+          ? { ...t, status: data.status || t.status, paymentStatus: data.paymentStatus || t.paymentStatus } 
+          : t
+      ));
+    };
+
+    socket.on('tokenUpdated', onTokenUpdated);
+
+    // 2. Auto-refresh every 30 seconds as a fallback
     const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
+    
+    return () => {
+      clearInterval(interval);
+      socket.off('tokenUpdated', onTokenUpdated);
+    };
   }, [isAdmin]);
 
   const fetchData = async () => {
@@ -543,7 +559,7 @@ const AdminDashboard = () => {
                       />
                     </div>
                   </div>
-                  <Select value={filterTokenStatus} onValueChange={setFilterTokenStatus}>
+                    <Select value={filterTokenStatus} onValueChange={setFilterTokenStatus}>
                     <SelectTrigger className="w-full sm:w-40">
                       <SelectValue placeholder="Filter by status" />
                     </SelectTrigger>
@@ -555,6 +571,26 @@ const AdminDashboard = () => {
                       <SelectItem value="cancelled">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
+
+                  {/* New Payment Status Filter */}
+                  <Select 
+                    value={editingToken?.filterPaymentStatus || 'all'} 
+                    onValueChange={(v) => {
+                      // This is a quick way to filter tokens by payment status
+                      setTokens(prev => [...prev]); // trigger re-render
+                      setFilterTokenStatus(v === 'paid' ? 'paid-only' : v === 'pending' ? 'pending-only' : 'all');
+                    }}
+                  >
+                    <SelectTrigger className="w-full sm:w-40">
+                      <SelectValue placeholder="Payment: All" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Payment: All</SelectItem>
+                      <SelectItem value="paid">Paid Only</SelectItem>
+                      <SelectItem value="pending">Pending Only</SelectItem>
+                    </SelectContent>
+                  </Select>
+
                   <Button onClick={fetchData} variant="outline">
                     Refresh
                   </Button>
@@ -570,6 +606,7 @@ const AdminDashboard = () => {
                         <TableHead>Department</TableHead>
                         <TableHead>Position</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Payment</TableHead>
                         <TableHead>Est. Time</TableHead>
                         <TableHead>Created</TableHead>
                       </TableRow>
@@ -595,6 +632,14 @@ const AdminDashboard = () => {
                                 }
                               >
                                 {t.status?.charAt(0).toUpperCase() + t.status?.slice(1)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={t.paymentStatus === 'paid' ? 'success' : 'warning'}
+                                className="font-semibold"
+                              >
+                                {t.paymentStatus === 'paid' ? 'Paid' : 'Pending'}
                               </Badge>
                             </TableCell>
                             <TableCell>{t.estimatedTime || 'N/A'}</TableCell>

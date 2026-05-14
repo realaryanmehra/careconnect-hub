@@ -6,6 +6,7 @@ const tokenSchema = new mongoose.Schema({
   patientName: { type: String, required: true },
   department: { type: String, required: true },
   status: { type: String, default: 'waiting', enum: ['waiting', 'in-progress', 'completed'] },
+  paymentStatus: { type: String, default: 'pending', enum: ['pending', 'paid', 'failed'] },
   position: Number,
   estimatedTime: String,
   createdAt: { type: Date, default: Date.now },
