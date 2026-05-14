@@ -68,6 +68,7 @@ const TokensPage = () => {
         };
 
         const onTokenUpdated = (data) => {
+            console.log("🔄 Token update received via socket:", data);
             setTokens(prev => prev.map(t => 
                 (t._id === data.id || t.id === data.id) ? { ...t, status: data.status } : t
             ));

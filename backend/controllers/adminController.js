@@ -264,7 +264,7 @@ export const updateToken = async (req, res) => {
       // 1. Emit Socket event for real-time dashboard update
       if (globalThis.io) {
         globalThis.io.emit('tokenUpdated', { 
-          id: token._id, 
+          id: token._id.toString(), 
           status: token.status,
           number: token.number 
         });
@@ -272,10 +272,10 @@ export const updateToken = async (req, res) => {
         // 2. If status is in-progress, send specialized "Call" event
         if (updates.status === 'in-progress') {
           globalThis.io.emit('tokenCalled', {
-            id: token._id,
+            id: token._id.toString(),
             number: token.number,
             patientName: token.patientName,
-            userId: token.userId
+            userId: token.userId?.toString()
           });
         }
       }
