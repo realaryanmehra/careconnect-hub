@@ -135,15 +135,6 @@ Follow these steps to run the development environment locally.
 
 ---
 
-## 🔑 Default Accounts (Demo Mode)
-
-To explore the dashboard without registering, use the pre-seeded credentials:
-
-* **Administrator Access**
-  * **Email:** `samar@gmail.com`
-  * **Password:** `samarpreet`
-
----
 
 ## 🤝 Collaboration Workflow
 
