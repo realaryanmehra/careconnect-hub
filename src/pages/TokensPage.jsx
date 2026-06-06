@@ -1,0 +1,314 @@
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { getTokens, generateToken, getDepartments } from "@/lib/api";
+import { socket } from "@/lib/socket";
+import { motion } from "framer-motion";
+import { Clock, Hash, User, CheckCircle, AlertCircle, Loader2, Plus, ClipboardList } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import Layout from "@/components/Layout";
+import { useToast } from "@/hooks/use-toast";
+import VideoCallModal from "@/components/VideoCallModal";
+import PaymentModal from "@/components/PaymentModal";
+import SplitText from "@/components/SplitText";
+import { Video, CreditCard } from "lucide-react";
+
+// We will fetch departments from API dynamically now.
+// const departments = ["Cardiology", "Neurology", "Orthopedics", "Pediatrics", "Ophthalmology", "General Medicine"];
+const statusConfig = {
+    waiting: { label: "Waiting", icon: Clock, className: "bg-warning/10 text-warning border-warning/20" },
+    "in-progress": { label: "In Progress", icon: Loader2, className: "bg-info/10 text-info border-info/20" },
+    completed: { label: "Completed", icon: CheckCircle, className: "bg-success/10 text-success border-success/20" },
+};
+const TokensPage = () => {
+    const { isAuthenticated } = useAuth();
+    const [tokens, setTokens] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [name, setName] = useState("");
+    const [dept, setDept] = useState("");
+    const [searchToken, setSearchToken] = useState("");
+    const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+    const [videoCallRoom, setVideoCallRoom] = useState(null);
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+    const [selectedTokenForPayment, setSelectedTokenForPayment] = useState(null);
+    const { toast } = useToast();
+    const [departments, setDepartments] = useState([]);
+
+    const handleJoinVideoCall = (tokenId) => {
+        setVideoCallRoom(tokenId);
+        setIsVideoModalOpen(true);
+    };
+
+    const handleOpenPayment = (token) => {
+        setSelectedTokenForPayment(token);
+        setIsPaymentModalOpen(true);
+    };
+
+    const handlePaymentSuccess = (tokenId) => {
+        setTokens(prev => prev.map(t => 
+            (t._id === tokenId || t.id === tokenId) ? { ...t, paymentStatus: 'paid' } : t
+        ));
+    };
+
+    // Fetch tokens
+    useEffect(() => {
+        if (!isAuthenticated) return;
+        const fetchTokensAndDepts = async () => {
+            try {
+                const [tokenData, deptData] = await Promise.all([
+                    getTokens(),
+                    getDepartments()
+                ]);
+                setTokens(tokenData.tokens || []);
+                setDepartments(deptData.departments?.map(d => d.name) || []);
+            } catch (error) {
+                toast({ title: "Error loading tokens", description: error.message, variant: "destructive" });
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchTokensAndDepts();
+
+        // Socket listeners
+        const onTokenGenerated = (newToken) => {
+            setTokens(prev => {
+                // Check if we already have it to avoid duplicates
+                if (prev.find(t => t._id === newToken._id || t.id === newToken.id)) return prev;
+                return [newToken, ...prev];
+            });
+        };
+
+        const onTokenUpdated = (data) => {
+            console.log("🔄 Token update received via socket:", data);
+            setTokens(prev => prev.map(t => 
+                (t._id === data.id || t.id === data.id) 
+                    ? { ...t, status: data.status || t.status, paymentStatus: data.paymentStatus || t.paymentStatus } 
+                    : t
+            ));
+        };
+
+        socket.on('tokenGenerated', onTokenGenerated);
+        socket.on('tokenUpdated', onTokenUpdated);
+
+        return () => {
+            socket.off('tokenGenerated', onTokenGenerated);
+            socket.off('tokenUpdated', onTokenUpdated);
+        };
+    }, [isAuthenticated, toast]);
+
+    const handleGenerate = async () => {
+        if (!name || !dept) {
+            toast({ title: "Please fill all fields", variant: "destructive" });
+            return;
+        }
+        try {
+            const data = await generateToken({ patientName: name, department: dept });
+            setTokens(prev => [data.token, ...prev]);
+            toast({ title: `Token #${data.token.number} generated!`, description: `Department: ${dept}` });
+            setName("");
+            setDept("");
+        } catch (error) {
+            toast({ title: "Failed to generate token", description: error.message, variant: "destructive" });
+        }
+    };
+    
+    const filteredTokens = searchToken
+        ? tokens.filter(t => t.number.toString().includes(searchToken) || t.patientName.toLowerCase().includes(searchToken.toLowerCase()))
+        : tokens;
+
+    if (loading) {
+        return (
+            <Layout>
+                <div className="container py-10 space-y-8">
+                    <Skeleton className="h-12 w-80" />
+                    <div className="grid lg:grid-cols-3 gap-8">
+                        <Skeleton className="h-96 w-full" />
+                        <div className="lg:col-span-2 space-y-3">
+                            {Array(5).fill().map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}
+                        </div>
+                    </div>
+                </div>
+            </Layout>
+        );
+    }
+    return (<Layout>
+      <div className="container py-10">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-foreground mb-2">
+            <SplitText text="Token " triggerOnView={false} />
+            <span className="text-primary"><SplitText text="Management" triggerOnView={false} delay={0.2} /></span>
+          </h1>
+          <p className="text-muted-foreground mb-8">Generate and track patient queue tokens in real time.</p>
+        </motion.div>
+
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Generate Token */}
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="lg:col-span-1">
+            <div className="glass-card rounded-xl p-6 sticky top-24">
+              <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+                <Plus className="h-5 w-5 text-primary"/> Generate Token
+              </h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1.5 block">Patient Name</label>
+                  <Input placeholder="Enter patient name" value={name} onChange={(e) => setName(e.target.value)}/>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1.5 block">Department</label>
+                  <Select value={dept} onValueChange={setDept}>
+                    <SelectTrigger><SelectValue placeholder="Select department"/></SelectTrigger>
+                    <SelectContent>
+                      {departments.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button className="w-full" onClick={handleGenerate}>
+                  Generate Token <Hash className="ml-2 h-4 w-4"/>
+                </Button>
+              </div>
+
+              {/* Quick stats */}
+              <div className="mt-6 pt-6 border-t border-border space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Total Tokens</span>
+                  <span className="font-semibold text-foreground">{tokens.length}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Waiting</span>
+                  <span className="font-semibold text-warning">{tokens.filter(t => t.status === "waiting").length}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">In Progress</span>
+                  <span className="font-semibold text-info">{tokens.filter(t => t.status === "in-progress").length}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Completed</span>
+                  <span className="font-semibold text-success">{tokens.filter(t => t.status === "completed").length}</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Token List */}
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="lg:col-span-2">
+            <div className="flex items-center gap-3 mb-4">
+              <Input placeholder="Search by token # or name..." value={searchToken} onChange={(e) => setSearchToken(e.target.value)} className="max-w-sm"/>
+            </div>
+
+            <div className="space-y-3">
+              {filteredTokens.length === 0 && (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-border/60 rounded-2xl bg-card/30 backdrop-blur-sm"
+                >
+                  <div className="bg-primary/10 p-4 rounded-full mb-4">
+                    <ClipboardList className="h-10 w-10 text-primary opacity-80" />
+                  </div>
+                  <h3 className="text-lg font-bold text-foreground mb-1">No Tokens Found</h3>
+                  <p className="text-sm text-muted-foreground max-w-sm mb-6">
+                    {searchToken 
+                      ? "We couldn't find any tokens matching your search criteria. Try a different name or number." 
+                      : "The queue is currently empty. Generate a new token to get started."}
+                  </p>
+                  {!searchToken && (
+                    <Button variant="outline" className="hover:bg-primary hover:text-white transition-colors" onClick={() => document.querySelector('input[placeholder="Enter patient name"]')?.focus()}>
+                      <Plus className="mr-2 h-4 w-4" /> Create First Token
+                    </Button>
+                  )}
+                </motion.div>
+              )}
+              {filteredTokens.map((token, i) => {
+            const sc = statusConfig[token.status];
+            return (<motion.div key={token.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="glass-card rounded-xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 hover:-translate-y-1 hover:shadow-lg">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary text-primary font-extrabold text-lg">
+                      #{token.number}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <User className="h-4 w-4 text-muted-foreground"/>
+                        <span className="font-semibold text-foreground">{token.patientName}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                        <span>{token.department}</span>
+                        <span>•</span>
+                        <span>{token.createdAt}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5"/> {token.estimatedTime}
+                      </span>
+                      <Badge variant="outline" className={sc.className}>
+                        <sc.icon className={`h-3 w-3 mr-1 ${token.status === "in-progress" ? "animate-spin" : ""}`}/>
+                        {sc.label}
+                      </Badge>
+                      
+                      {/* Payment Status Badge */}
+                      <Badge variant={token.paymentStatus === "paid" ? "success" : "warning"} className="gap-1">
+                        {token.paymentStatus === "paid" ? <CheckCircle className="h-3 w-3" /> : <CreditCard className="h-3 w-3" />}
+                        {token.paymentStatus === "paid" ? "Paid" : "Unpaid"}
+                      </Badge>
+
+                      <div className="flex gap-2">
+                        {/* Show Pay Now button if unpaid */}
+                        {token.paymentStatus !== "paid" && (
+                          <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            onClick={() => handleOpenPayment(token)}
+                            className="h-8 gap-1 bg-amber-100 text-amber-700 hover:bg-amber-200 border-amber-200"
+                          >
+                            <CreditCard className="h-4 w-4" /> Pay Now
+                          </Button>
+                        )}
+
+                        {/* Show Join button ONLY if in-progress AND paid */}
+                        {token.status === "in-progress" && (
+                          token.paymentStatus === "paid" ? (
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleJoinVideoCall(token.id || token._id)} 
+                              className="h-8 gap-1 border-primary/20 text-primary hover:bg-primary hover:text-white"
+                            >
+                                <Video className="h-4 w-4" /> Join
+                            </Button>
+                          ) : (
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              disabled
+                              className="h-8 gap-1 opacity-50 cursor-not-allowed"
+                              title="Pay consultation fee to join"
+                            >
+                                <Video className="h-4 w-4" /> Locked
+                            </Button>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>);
+        })}
+            </div>
+          </motion.div>
+        </div>
+      </div>
+      <VideoCallModal 
+        isOpen={isVideoModalOpen} 
+        onClose={() => setIsVideoModalOpen(false)} 
+        roomId={videoCallRoom} 
+        socket={socket} 
+      />
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        token={selectedTokenForPayment}
+        onSuccess={handlePaymentSuccess}
+      />
+    </Layout>);
+};
+export default TokensPage;
